@@ -5,7 +5,7 @@ const searchapi = "/search/";
 
 // Api Server Manager
 
-const AvailableServers = ["https://api100.anime-dex.workers.dev"];
+const AvailableServers = ["https://beatanimesapi.onrender.com"];
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
@@ -145,3 +145,4 @@ async function loadData() {
 }
 
 loadData();
+
