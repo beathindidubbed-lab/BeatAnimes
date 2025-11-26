@@ -51,9 +51,7 @@ To run Beat AnimesLite on your local machine:
 
 </details>
 
-## 🎯 Deploy Beat Animes Proxy (Recommended)
 
-- [Beat AnimesProxy](https://github.com/TechShreyash/CloudflareWorker/tree/main/Beat Animesproxy) : Proxy to bypass CORS errors.
 
 <details>
   <summary>Add your Proxy to your site</summary>
@@ -69,7 +67,8 @@ To run Beat AnimesLite on your local machine:
 
 Stay informed about the latest updates by joining our channels / groups :
 
-[![Telegram Channel](https://img.shields.io/static/v1?label=Join&message=Telegram%20Channel&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots) [![Telegram Group](https://img.shields.io/static/v1?label=Join&message=Telegram%20Group&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots_Support)
+[![Telegram Channel](https://img.shields.io/static/v1?label=Join&message=Telegram%20Channel&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/BeatAnime) [![Telegram Group](https://img.shields.io/static/v1?label=Join&message=Telegram%20Group&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://t.me/Beat_Anime_Discussion)
+
 
 
 
