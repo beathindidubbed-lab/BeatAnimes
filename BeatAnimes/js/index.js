@@ -6,7 +6,7 @@ const recentapi = "/recent/";
 
 // Api Server Manager
 
-const AvailableServers = ["https://api100.anime-dex.workers.dev"];
+const AvailableServers = ["https://beatanimesapi.onrender.com"];
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
@@ -261,3 +261,4 @@ getJson(IndexApi).then((data) => {
         console.log("Recent animes loaded");
     });
 });
+
