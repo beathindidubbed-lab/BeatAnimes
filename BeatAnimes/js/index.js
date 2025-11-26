@@ -1,6 +1,5 @@
 // Api urls
 
-const ProxyApi = "https://proxy.techzbots1.workers.dev/?u=";
 const IndexApi = "/home";
 const recentapi = "/recent/";
 
@@ -23,11 +22,7 @@ async function getJson(path, errCount = 0) {
         throw `Too many errors while fetching ${url}`;
     }
 
-    if (errCount > 0) {
-        // Retry fetch using proxy
-        console.log("Retrying fetch using proxy");
-        url = ProxyApi + url;
-    }
+    // Proxy logic removed
 
     try {
         const _url_of_site = new URL(window.location.href);
@@ -261,4 +256,3 @@ getJson(IndexApi).then((data) => {
         console.log("Recent animes loaded");
     });
 });
-
