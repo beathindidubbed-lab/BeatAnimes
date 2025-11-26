@@ -1,6 +1,5 @@
 // Api urls
 
-const ProxyApi = "https://proxy.techzbots1.workers.dev/?u=";
 const searchapi = "/search/";
 
 // Api Server Manager
@@ -21,11 +20,7 @@ async function getJson(path, errCount = 0) {
         throw `Too many errors while fetching ${url}`;
     }
 
-    if (errCount > 0) {
-        // Retry fetch using proxy
-        console.log("Retrying fetch using proxy");
-        url = ProxyApi + url;
-    }
+    // Proxy logic removed
 
     try {
         const _url_of_site = new URL(window.location.href);
@@ -145,4 +140,3 @@ async function loadData() {
 }
 
 loadData();
-
