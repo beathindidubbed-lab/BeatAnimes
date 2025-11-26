@@ -8,8 +8,7 @@ Thank you for your understanding and support during the project's active phase! 
 
 ### Project Links :
 
-<p>Telegram Group : <a href=https://t.me/Beat_Anime_Discussion>@TBeat_Anime_Group</a>
-<p>ThumbGen Api Repository : <a href=https://github.com/TechShreyash/ThumbApi>TechShreyash/ThumbApi</a>
+<p>Telegram Group : <a href=https://t.me/Beat_Anime_Discussion>@Beat_Anime_Group</a>
 
 <h1 align="center"><b>Beat AnimesLite v3.0</b></h1>
 
@@ -68,6 +67,7 @@ To run Beat AnimesLite on your local machine:
 Stay informed about the latest updates by joining our channels / groups :
 
 [![Telegram Channel](https://img.shields.io/static/v1?label=Join&message=Telegram%20Channel&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/BeatAnime) [![Telegram Group](https://img.shields.io/static/v1?label=Join&message=Telegram%20Group&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://t.me/Beat_Anime_Discussion)
+
 
 
 
