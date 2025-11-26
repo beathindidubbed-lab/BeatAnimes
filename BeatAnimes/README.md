@@ -13,17 +13,9 @@ Thank you for your understanding and support during the project's active phase! 
 
 <h1 align="center"><b>Beat AnimesLite v3.0</b></h1>
 
-Beat AnimesLite is a pure HTML, CSS, and JS version of Beat Animes. It is lightweight, fast, ad-free, open-source, and easy to deploy. The design is responsive, and it uses Gogoanime and Anilist to get content. Powered by the blazing-fast [Beat AnimesApi](https://api.anime-dex.workers.dev).
+Beat AnimesLite is a pure HTML, CSS, and JS version of Beat Animes. It is lightweight, fast, ad-free, open-source, and easy to deploy. The design is responsive, and it uses Gogoanime and Anilist to get content. Powered by the blazing-fast 
 
-<p align="center">
-<img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2FTechShreyash%2FBeat AnimesLite&count_bg=%2379C83D&title_bg=%23555555&icon=github.svg&icon_color=%23E7E7E7&title=Page+Views&edge_flat=false"/>
-</p>
 
-## 🌐 Demo
-
-- Run On Your PC : https://github.com/TechShreyash/Beat AnimesLite?tab=readme-ov-file#-run-on-your-pc
-
-## 🔥 Host Your Own
 
 ### 🆓 Free Hostings
 
@@ -78,5 +70,6 @@ To run Beat AnimesLite on your local machine:
 Stay informed about the latest updates by joining our channels / groups :
 
 [![Telegram Channel](https://img.shields.io/static/v1?label=Join&message=Telegram%20Channel&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots) [![Telegram Group](https://img.shields.io/static/v1?label=Join&message=Telegram%20Group&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots_Support)
+
 
 
