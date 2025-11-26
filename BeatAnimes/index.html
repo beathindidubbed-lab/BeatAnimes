@@ -81,7 +81,13 @@
         </div>
     </footer>
     <hr />
-
+    
+    <script>
+    // Ping API every 14 minutes to keep it awake
+    setInterval(() => {
+    fetch('https://beatanimes-api.onrender.com/ping').catch(() => {});
+     }, 840000); // 14 minutes
+    </script>
     <script src="./js/index.js"></script>
     <script async src="https://kit.fontawesome.com/45cb819601.js" crossorigin="anonymous"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-BHQX4066ZV"></script>
@@ -94,5 +100,6 @@
         gtag("config", "G-BHQX4066ZV");
     </script>
 </body>
+
 
 </html>
