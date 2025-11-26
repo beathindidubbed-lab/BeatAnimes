@@ -8,12 +8,8 @@ Thank you for your understanding and support during the project's active phase! 
 
 ### Project Links :
 
-<p>Telegram Support Group : <a href=https://telegram.me/TechZBots_Support>@TechZBots_Support</a>
-<p>Beat AnimesLite Repository : <a href=https://github.com/TechShreyash/Beat AnimesLite>TechShreyash/Beat AnimesLite</a>
-<p>Beat Animes Api Repository : <a href=https://github.com/TechShreyash/Beat AnimesApi>TechShreyash/Beat AnimesApi</a>
-<p>Beat Animes Proxy Repository : <a href=https://github.com/TechShreyash/CloudflareWorker/tree/main/Beat Animesproxy>TechShreyash/Beat Animesproxy</a>
+<p>Telegram Group : <a href=https://t.me/Beat_Anime_Discussion>@TBeat_Anime_Group</a>
 <p>ThumbGen Api Repository : <a href=https://github.com/TechShreyash/ThumbApi>TechShreyash/ThumbApi</a>
-<p>Stats Api Repository : <a href=https://github.com/TechShreyash/StatsApi>TechShreyash/StatsApi</a>
 
 [![image](https://github.com/TechShreyash/Beat AnimesLite/assets/82265247/98c27bb6-c4a8-4224-983e-2bb21386032a)](https://Beat Animes.pages.dev)
 
@@ -84,3 +80,4 @@ To run Beat AnimesLite on your local machine:
 Stay informed about the latest updates by joining our channels / groups :
 
 [![Telegram Channel](https://img.shields.io/static/v1?label=Join&message=Telegram%20Channel&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots) [![Telegram Group](https://img.shields.io/static/v1?label=Join&message=Telegram%20Group&color=blueviolet&style=for-the-badge&logo=telegram&logoColor=violet)](https://telegram.me/TechZBots_Support)
+
