@@ -5,7 +5,7 @@ const recentapi = "/recent/";
 
 // Api Server Manager
 
-const AvailableServers = ["https://beatanimesapi.onrender.com"];
+const AvailableServers = ["https://beatanimesapi.onrender.com"]; // <-- Your Render API URL is set here
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
