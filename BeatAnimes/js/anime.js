@@ -5,7 +5,7 @@ const recommendationsapi = "/recommendations/";
 
 // Api Server Manager
 
-const AvailableServers = ["https://beatanimesapi.onrender.com"];
+const AvailableServers = ["https://beatanimesapi.onrender.com"]; // <-- Your URL is here
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
@@ -21,7 +21,11 @@ async function getJson(path, errCount = 0) {
         throw `Too many errors while fetching ${url}`;
     }
 
-    // Proxy logic removed
+    // Proxy logic removed - Direct fetch attempt only
+    // if (errCount > 0) {
+    //     console.log("Retrying fetch using proxy");
+    //     url = ProxyApi + url;
+    // }
 
     try {
         const _url_of_site = new URL(window.location.href);
@@ -30,7 +34,8 @@ async function getJson(path, errCount = 0) {
         return await response.json();
     } catch (errors) {
         console.error(errors);
-        return getJson(path, errCount + 1);
+        // On error, retry the fetch up to 3 times (errCount + 1)
+        return getJson(path, errCount + 1); 
     }
 }
 
