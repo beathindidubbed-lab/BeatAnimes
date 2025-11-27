@@ -4,7 +4,7 @@ const searchapi = "/search/";
 
 // Api Server Manager
 
-const AvailableServers = ["https://beatanimesapi.onrender.com"];
+const AvailableServers = ["https://beatanimesapi.onrender.com"]; // <-- Your Render API URL is set here
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
@@ -20,7 +20,12 @@ async function getJson(path, errCount = 0) {
         throw `Too many errors while fetching ${url}`;
     }
 
-    // Proxy logic removed
+    // Proxy logic removed - Direct fetch attempt only
+    // if (errCount > 0) {
+    //     // Retry fetch using proxy
+    //     console.log("Retrying fetch using proxy");
+    //     url = ProxyApi + url;
+    // }
 
     try {
         const _url_of_site = new URL(window.location.href);
