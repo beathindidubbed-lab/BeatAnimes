@@ -6,7 +6,7 @@ const dlapi = "/download/";
 
 // Api Server Manager
 
-const AvailableServers = ["https://beatanimesapi.onrender.com"];
+const AvailableServers = ["https://beatanimesapi.onrender.com"]; // <-- Your Render API URL is set here
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
@@ -22,7 +22,11 @@ async function getJson(path, errCount = 0) {
         throw `Too many errors while fetching ${url}`;
     }
 
-    // Proxy logic removed
+    // Proxy logic removed - Direct fetch attempt only
+    // if (errCount > 0) {
+    //     console.log("Retrying fetch using proxy");
+    //     url = ProxyApi + url;
+    // }
 
     try {
         const _url_of_site = new URL(window.location.href);
@@ -93,7 +97,7 @@ async function loadServers(servers, success = true) {
 // Function to select server
 function selectServer(btn, sandbox = false) {
     const buttons = document.getElementsByClassName("sobtn");
-    const iframe = document.getElementById("Beat AnimesFrame");
+    const iframe = document.getElementById("AnimeDexFrame");
 
     if (sandbox == true) {
         iframe.sandbox =
@@ -378,7 +382,7 @@ async function loadData() {
         document.getElementById("error-desc").innerHTML = err;
         console.error(err);
     }
-    document.getElementById("Beat AnimesFrame").focus();
+    document.getElementById("AnimeDexFrame").focus();
 }
 
 loadData();
