@@ -1,61 +1,71 @@
 // Api urls
-
 const animeapi = "/anime/";
 const recommendationsapi = "/recommendations/";
 
 // Api Server Manager
-
-const AvailableServers = ["https://beatanimesapi.onrender.com"]; // <-- Your URL is here
+const AvailableServers = ["https://beatanimesapi.onrender.com"];
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
 }
 
-// Usefull functions
-
+// Useful functions
 async function getJson(path, errCount = 0) {
     const ApiServer = getApiServer();
     let url = ApiServer + path;
 
     if (errCount > 2) {
-        throw `Too many errors while fetching ${url}`;
+        throw new Error(`Too many errors while fetching ${url}`);
     }
-
-    // Proxy logic removed - Direct fetch attempt only
-    // if (errCount > 0) {
-    //     console.log("Retrying fetch using proxy");
-    //     url = ProxyApi + url;
-    // }
 
     try {
         const _url_of_site = new URL(window.location.href);
         const referer = _url_of_site.origin;
-        const response = await fetch(url, { headers: { referer: referer } });
+        const response = await fetch(url, { 
+            headers: { referer: referer },
+            cache: 'no-cache'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+        
         return await response.json();
     } catch (errors) {
         console.error(errors);
-        // On error, retry the fetch up to 3 times (errCount + 1)
-        return getJson(path, errCount + 1); 
+        return getJson(path, errCount + 1);
     }
 }
 
 function getGenreHtml(genres) {
+    if (!genres || !Array.isArray(genres)) return "";
+    
     let ghtml = "";
     for (let i = 0; i < genres.length; i++) {
-        ghtml += `<a>${genres[i].trim()}</a>`;
+        const genre = String(genres[i] || "").trim();
+        if (genre) {
+            ghtml += `<a>${genre}</a>`;
+        }
     }
     return ghtml;
 }
 
 async function RefreshLazyLoader() {
-    const imageObserver = new IntersectionObserver((entries, imgObserver) => {
+    const imageObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
                 const lazyImage = entry.target;
-                lazyImage.src = lazyImage.dataset.src;
+                if (lazyImage.dataset.src) {
+                    lazyImage.src = lazyImage.dataset.src;
+                    lazyImage.classList.remove("lzy_img");
+                    imageObserver.unobserve(lazyImage);
+                }
             }
         });
+    }, {
+        rootMargin: "50px"
     });
+    
     const arr = document.querySelectorAll("img.lzy_img");
     arr.forEach((v) => {
         imageObserver.observe(v);
@@ -63,114 +73,173 @@ async function RefreshLazyLoader() {
 }
 
 function getAnilistTitle(title) {
-    if (title["userPreferred"] != null) {
-        return title["userPreferred"];
-    } else if (title["english"] != null) {
-        return title["english"];
-    } else if (title["romaji"] != null) {
-        return title["romaji"];
-    } else if (title["native"] != null) {
-        return title["native"];
-    } else {
-        return "Unknown";
-    }
+    if (!title) return "Unknown";
+    
+    if (title.userPreferred) return title.userPreferred;
+    if (title.english) return title.english;
+    if (title.romaji) return title.romaji;
+    if (title.native) return title.native;
+    
+    return "Unknown";
 }
 
 function getAnilistOtherTitle(title, current) {
-    if (title["userPreferred"] != null && title["userPreferred"] != current) {
-        return title["userPreferred"];
-    } else if (title["english"] != null && title["english"] != current) {
-        return title["english"];
-    } else if (title["romaji"] != null && title["romaji"] != current) {
-        return title["romaji"];
-    } else if (title["native"] != null && title["native"] != current) {
-        return title["native"];
-    } else {
-        return "Unknown";
-    }
+    if (!title) return "Unknown";
+    
+    if (title.userPreferred && title.userPreferred !== current) return title.userPreferred;
+    if (title.english && title.english !== current) return title.english;
+    if (title.romaji && title.romaji !== current) return title.romaji;
+    if (title.native && title.native !== current) return title.native;
+    
+    return "Unknown";
 }
 
 // Function to get anime info from gogo id
 async function loadAnimeFromGogo(data) {
+    // CRITICAL NULL CHECKS
+    if (!data) {
+        throw new Error("No anime data received from API");
+    }
+
+    const name = data.name || "Unknown Anime";
+    const image = data.image || "./static/loading1.gif";
+    const episodes = data.episodes || [];
+    const plot_summary = data.plot_summary || "No description available.";
+    const other_name = data.other_name || "N/A";
+    const released = data.released || "Unknown";
+    const status = data.status || "Unknown";
+    const type = data.type || "TV";
+    
+    let genre = "Unknown";
+    if (data.genre) {
+        if (typeof data.genre === 'string') {
+            genre = data.genre;
+        } else if (Array.isArray(data.genre)) {
+            genre = data.genre.join(", ");
+        }
+    }
+
+    // Replace placeholders
     document.documentElement.innerHTML = document.documentElement.innerHTML
-        .replaceAll("TITLE", data["name"])
-        .replaceAll("IMG", data["image"])
-        .replaceAll("LANG", "EP " + data["episodes"].length)
-        .replaceAll("TYPE", data["type"])
-        .replaceAll("URL", window.location)
-        .replaceAll("SYNOPSIS", data["plot_summary"])
-        .replaceAll("OTHER", data["other_name"])
-        .replaceAll("TOTAL", data["episodes"].length)
-        .replaceAll("YEAR", data["released"])
-        .replaceAll("STATUS", data["status"])
-        .replaceAll("GENERES", getGenreHtml(data["genre"].split(",")));
+        .replaceAll("TITLE", name)
+        .replaceAll("IMG", image)
+        .replaceAll("LANG", "EP " + episodes.length)
+        .replaceAll("TYPE", type)
+        .replaceAll("URL", window.location.href)
+        .replaceAll("SYNOPSIS", plot_summary)
+        .replaceAll("OTHER", other_name)
+        .replaceAll("TOTAL", episodes.length)
+        .replaceAll("YEAR", released)
+        .replaceAll("STATUS", status)
+        .replaceAll("GENERES", getGenreHtml(genre.split(",")));
 
     document.getElementById("main-content").style.display = "block";
     document.getElementById("load").style.display = "none";
+    
     setTimeout(() => {
-        document.getElementById("poster-img").style.display = "block";
+        const posterImg = document.getElementById("poster-img");
+        if (posterImg) posterImg.style.display = "block";
     }, 100);
 
-    const episodes = data["episodes"]
-
-    if (episodes.length == 0) {
+    if (episodes.length === 0) {
         const ephtml = '<a id="no-ep-found" class="ep-btn">No Episodes Found</a>';
         document.getElementById("ep-lower-div").innerHTML = ephtml;
         document.getElementById("ep-divo-outer").style.display = "block";
         document.getElementById("ep-upper-div").style.display = "none";
         document.getElementById('ep-lower-div').style.gridTemplateColumns = "unset";
-        document.getElementById('no-ep-found').style.width = "100%";
-    }
-    else {
-        document.getElementById("watch-btn").href =
-            "./episode.html?anime_id=" +
-            AnimeID +
-            "&episode_id=" +
-            data["episodes"][0][1];
+        const noEpBtn = document.getElementById('no-ep-found');
+        if (noEpBtn) noEpBtn.style.width = "100%";
+    } else {
+        const watchBtn = document.getElementById("watch-btn");
+        if (watchBtn && episodes[0] && episodes[0][1]) {
+            watchBtn.href = "./episode.html?anime_id=" + AnimeID + "&episode_id=" + episodes[0][1];
+        }
 
         console.log("Anime Info loaded");
         RefreshLazyLoader();
 
-        getEpSlider(data["episodes"]);
-        getEpList(data["episodes"]);
+        getEpSlider(episodes);
+        getEpList(episodes);
     }
-    getRecommendations(data["name"]);
+    
+    getRecommendations(name);
 }
 
 // Function to get anime info from anilist search
 async function loadAnimeFromAnilist(data) {
-    const title = getAnilistTitle(data["title"]);
+    if (!data) {
+        throw new Error("No anime data received from Anilist");
+    }
+
+    const title = getAnilistTitle(data.title);
+    const coverImage = data.coverImage?.large || "./static/loading1.gif";
+    const episodes = data.episodes || "?";
+    const format = data.format || "TV";
+    const description = data.description 
+        ? data.description.replace(/<[^>]*>/g, '') 
+        : "No description available.";
+    const otherTitle = getAnilistOtherTitle(data.title, title);
+    const seasonYear = data.seasonYear || "Unknown";
+    const status = data.status || "Unknown";
+    const genres = data.genres || [];
 
     document.documentElement.innerHTML = document.documentElement.innerHTML
         .replaceAll("TITLE", title)
-        .replaceAll("IMG", data["coverImage"]["large"])
-        .replaceAll("LANG", "EP " + data["episodes"])
-        .replaceAll("TYPE", data["format"])
-        .replaceAll("URL", window.location)
-        .replaceAll("SYNOPSIS", data["description"])
-        .replaceAll("OTHER", getAnilistOtherTitle(data["title"], title))
-        .replaceAll("TOTAL", "EP " + data["episodes"])
-        .replaceAll("YEAR", data["seasonYear"])
-        .replaceAll("STATUS", data["status"])
-        .replaceAll("GENERES", getGenreHtml(data["genres"]));
+        .replaceAll("IMG", coverImage)
+        .replaceAll("LANG", "EP " + episodes)
+        .replaceAll("TYPE", format)
+        .replaceAll("URL", window.location.href)
+        .replaceAll("SYNOPSIS", description)
+        .replaceAll("OTHER", otherTitle)
+        .replaceAll("TOTAL", "EP " + episodes)
+        .replaceAll("YEAR", seasonYear)
+        .replaceAll("STATUS", status)
+        .replaceAll("GENERES", getGenreHtml(genres));
 
     document.getElementById("main-content").style.display = "block";
     document.getElementById("load").style.display = "none";
 
-    console.log("Anime Info loaded");
+    console.log("Anime Info loaded from Anilist");
 
-    const recommendations = data["recommendations"];
+    const recommendations = data.recommendations || [];
     let rechtml = "";
 
-    for (i = 0; i < recommendations.length; i++) {
+    for (let i = 0; i < Math.min(recommendations.length, 20); i++) {
         let anime = recommendations[i];
-        let title = anime["title"]["userPreferred"];
-        rechtml += `<a href="./anime.html?anime_id=${title}"><div class="poster la-anime"> <div id="shadow1" class="shadow"> <div class="dubb">${anime["meanScore"]} / 100</div><div class="dubb dubb2">${anime["format"]}</div></div><div id="shadow2" class="shadow"> <img class="lzy_img" src="./static/loading1.gif" data-src="${anime["coverImage"]["large"]}"> </div><div class="la-details"> <h3>${title}</h3> <div id="extra"> <span>${anime["status"]}</span> <span class="dot"></span> <span>EP ${anime["episodes"]}</span> </div></div></div></a>`;
+        if (!anime || !anime.title) continue;
+        
+        let animeTitle = anime.title.userPreferred || anime.title.english || "Unknown";
+        let coverImg = anime.coverImage?.large || "./static/loading1.gif";
+        let meanScore = anime.meanScore || "N/A";
+        let animeFormat = anime.format || "TV";
+        let animeEpisodes = anime.episodes || "?";
+        let animeStatus = anime.status || "Unknown";
+        
+        rechtml += `<a href="./anime.html?anime_id=${encodeURIComponent(animeTitle)}">
+            <div class="poster la-anime">
+                <div id="shadow1" class="shadow">
+                    <div class="dubb">${meanScore} / 100</div>
+                    <div class="dubb dubb2">${animeFormat}</div>
+                </div>
+                <div id="shadow2" class="shadow">
+                    <img class="lzy_img" src="./static/loading1.gif" data-src="${coverImg}" 
+                         onerror="this.src='./static/loading1.gif'" alt="${animeTitle}">
+                </div>
+                <div class="la-details">
+                    <h3>${animeTitle}</h3>
+                    <div id="extra">
+                        <span>${animeStatus}</span>
+                        <span class="dot"></span>
+                        <span>EP ${animeEpisodes}</span>
+                    </div>
+                </div>
+            </div>
+        </a>`;
     }
+    
     document.getElementById("latest2").innerHTML = rechtml;
-
-    document.getElementById("ephtmldiv").innerHTML =
-        '<a class="ep-btn">Anime Name Not Found On GogoAnime, Try Searching With A Different Name...</a>';
+    document.getElementById("ep-lower-div").innerHTML = 
+        '<a class="ep-btn">Anime Name Not Found On GogoAnime. Try Searching With A Different Name...</a>';
 
     RefreshLazyLoader();
     console.log("Anime Recommendations loaded");
@@ -178,22 +247,41 @@ async function loadAnimeFromAnilist(data) {
 
 // Function to get episode Slider
 async function getEpSlider(total) {
+    if (!total || !Array.isArray(total) || total.length === 0) {
+        console.warn("No episodes to display in slider");
+        return;
+    }
+
     let ephtml = "";
 
     try {
         for (let i = 0; i < total.length; i++) {
+            if (!total[i] || total[i].length < 2) continue;
+            
             const episodeId = total[i][1];
-            const epNum = total[i][0].replaceAll("-", ".");
+            const epNum = String(total[i][0] || "").replaceAll("-", ".");
+            
             if (Number(epNum) > 0) {
-                ephtml += `<div class=ep-slide><a href="./episode.html?anime_id=${AnimeID}&episode_id=${episodeId}"><img onerror="retryImageLoad(this)" class="lzy_img" src="./static/loading1.gif" data-src=https://thumb.techzbots1.workers.dev/thumb/${episodeId}><div class=ep-title><span>Episode ${epNum}</span></div></a></div>`;
+                ephtml += `<div class="ep-slide">
+                    <a href="./episode.html?anime_id=${AnimeID}&episode_id=${episodeId}">
+                        <img onerror="retryImageLoad(this)" class="lzy_img" 
+                             src="./static/loading1.gif" 
+                             data-src="https://thumb.techzbots1.workers.dev/thumb/${episodeId}"
+                             alt="Episode ${epNum}">
+                        <div class="ep-title">
+                            <span>Episode ${epNum}</span>
+                        </div>
+                    </a>
+                </div>`;
             }
         }
+        
         document.getElementById("ep-slider").innerHTML = ephtml;
         document.getElementById("slider-main").style.display = "block";
         RefreshLazyLoader();
         console.log("Episode Slider loaded");
     } catch (err) {
-        console.error(err);
+        console.error("Episode slider error:", err);
     }
 }
 
@@ -202,13 +290,9 @@ function retryImageLoad(img) {
     const ImageUrl = img.src;
     img.src = "./static/loading1.gif";
 
-    // retry loading after 3 second
-
     setTimeout(() => {
         if (ImageUrl.includes("?t=")) {
             const t = Number(ImageUrl.split("?t=")[1]) + 1;
-
-            // Retry 10 times
             if (t < 5) {
                 img.src = ImageUrl.split("?t=")[0] + "?t=" + String(t);
             }
@@ -222,39 +306,44 @@ function retryImageLoad(img) {
 let Episode_List = [];
 
 async function getEpList(total) {
+    if (!total || !Array.isArray(total)) {
+        console.warn("No episodes to list");
+        return;
+    }
+
     Episode_List = total;
     const TotalEp = total.length;
     let html = "";
     let loadedFirst = false;
 
     for (let i = 0; i < total.length; i++) {
-        const epnum = Number(total[i][0].replaceAll("-", "."));
+        if (!total[i] || total[i].length < 1) continue;
+        
+        const epnum = Number(String(total[i][0] || "0").replaceAll("-", "."));
 
         if ((epnum - 1) % 100 === 0) {
             let epUpperBtnText;
 
             if (TotalEp - epnum < 100) {
                 epUpperBtnText = `${epnum} - ${TotalEp}`;
-                html += `<option class="ep-btn" data-from=${epnum} data-to=${TotalEp}>${epUpperBtnText}</option>`;
+                html += `<option class="ep-btn" data-from="${epnum}" data-to="${TotalEp}">${epUpperBtnText}</option>`;
 
                 if (!loadedFirst) {
-                    // load first episode list
                     getEpLowerList(epnum, TotalEp);
                     loadedFirst = true;
                 }
             } else {
                 epUpperBtnText = `${epnum} - ${epnum + 99}`;
-                html += `<option class="ep-btn" data-from=${epnum} data-to=${epnum + 99
-                    }>${epUpperBtnText}</option>`;
+                html += `<option class="ep-btn" data-from="${epnum}" data-to="${epnum + 99}">${epUpperBtnText}</option>`;
 
                 if (!loadedFirst) {
-                    // load first episode list
                     getEpLowerList(epnum, epnum + 99);
                     loadedFirst = true;
                 }
             }
         }
     }
+    
     document.getElementById("ep-upper-div").innerHTML = html;
     document.getElementById("ep-divo-outer").style.display = "block";
     console.log("Episode list loaded");
@@ -265,19 +354,22 @@ async function getEpLowerList(start, end) {
     const eplist = Episode_List.slice(start - 1, end);
 
     for (let i = 0; i < eplist.length; i++) {
+        if (!eplist[i] || eplist[i].length < 2) continue;
+        
         const episode_id = eplist[i][1];
-        const x = eplist[i][1].split("-episode-");
-        let epnum = Number(x[1].replaceAll("-", "."));
+        const x = episode_id.split("-episode-");
+        let epnum = Number(String(x[1] || "0").replaceAll("-", "."));
 
         let epLowerBtnText = `${epnum}`;
 
         html += `<a class="ep-btn" href="./episode.html?anime_id=${AnimeID}&episode_id=${episode_id}">${epLowerBtnText}</a>`;
     }
+    
     document.getElementById("ep-lower-div").innerHTML = html;
 }
 
 async function episodeSelectChange(elem) {
-    var option = elem.options[elem.selectedIndex];
+    const option = elem.options[elem.selectedIndex];
     getEpLowerList(
         parseInt(option.getAttribute("data-from")),
         parseInt(option.getAttribute("data-to"))
@@ -286,7 +378,8 @@ async function episodeSelectChange(elem) {
 
 // Function to get anime recommendations
 async function getRecommendations(anime_title) {
-    document.getElementsByClassName("sload")[0].style.display = "block";
+    const loadElem = document.getElementsByClassName("sload")[0];
+    if (loadElem) loadElem.style.display = "block";
 
     anime_title = anime_title.replaceAll(" ", "+");
 
@@ -294,20 +387,56 @@ async function getRecommendations(anime_title) {
     try {
         data = await getJson(recommendationsapi + anime_title);
     } catch (err) {
-        document.getElementById("similar-div").style.display = "none";
+        console.error("Failed to load recommendations:", err);
+        const similarDiv = document.getElementById("similar-div");
+        if (similarDiv) similarDiv.style.display = "none";
         return;
     }
 
-    const recommendations = data["results"];
+    if (!data || !data.results || !Array.isArray(data.results)) {
+        console.warn("No recommendations available");
+        if (loadElem) loadElem.style.display = "none";
+        return;
+    }
+
+    const recommendations = data.results;
     let rechtml = "";
 
-    for (i = 0; i < recommendations.length; i++) {
+    for (let i = 0; i < Math.min(recommendations.length, 20); i++) {
         let anime = recommendations[i];
-        let title = anime["title"]["userPreferred"];
-        rechtml += `<a href="./anime.html?anime_id=${title}"><div class="poster la-anime"> <div id="shadow1" class="shadow"> <div class="dubb">${anime["meanScore"]} / 100</div><div class="dubb dubb2">${anime["format"]}</div></div><div id="shadow2" class="shadow"> <img class="lzy_img" src="./static/loading1.gif" data-src="${anime["coverImage"]["large"]}"> </div><div class="la-details"> <h3>${title}</h3> <div id="extra"> <span>${anime["status"]}</span> <span class="dot"></span> <span>EP ${anime["episodes"]}</span> </div></div></div></a>`;
+        if (!anime || !anime.title) continue;
+        
+        let title = anime.title.userPreferred || anime.title.english || "Unknown";
+        let coverImg = anime.coverImage?.large || "./static/loading1.gif";
+        let meanScore = anime.meanScore || "N/A";
+        let format = anime.format || "TV";
+        let episodes = anime.episodes || "?";
+        let status = anime.status || "Unknown";
+        
+        rechtml += `<a href="./anime.html?anime_id=${encodeURIComponent(title)}">
+            <div class="poster la-anime">
+                <div id="shadow1" class="shadow">
+                    <div class="dubb">${meanScore} / 100</div>
+                    <div class="dubb dubb2">${format}</div>
+                </div>
+                <div id="shadow2" class="shadow">
+                    <img class="lzy_img" src="./static/loading1.gif" data-src="${coverImg}" 
+                         onerror="this.src='./static/loading1.gif'" alt="${title}">
+                </div>
+                <div class="la-details">
+                    <h3>${title}</h3>
+                    <div id="extra">
+                        <span>${status}</span>
+                        <span class="dot"></span>
+                        <span>EP ${episodes}</span>
+                    </div>
+                </div>
+            </div>
+        </a>`;
     }
+    
     document.getElementById("latest2").innerHTML = rechtml;
-    document.getElementsByClassName("sload")[0].style.display = "none";
+    if (loadElem) loadElem.style.display = "none";
     console.log("Anime Recommendations loaded");
     RefreshLazyLoader();
 }
@@ -316,39 +445,49 @@ async function getRecommendations(anime_title) {
 const windowWidth = window.innerWidth;
 
 function plusSlides(n) {
+    const carousel = document.getElementById("slider-carousel");
+    if (!carousel) return;
+    
     if (n === 1) {
-        document.getElementById("slider-carousel").scrollLeft += windowWidth / 2;
+        carousel.scrollLeft += windowWidth / 2;
     } else if (n === -1) {
-        document.getElementById("slider-carousel").scrollLeft -= windowWidth / 2;
+        carousel.scrollLeft -= windowWidth / 2;
     }
 }
 
-//Running functions
-
+// Running functions
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 
 const AnimeID = urlParams.get("anime_id");
-if (AnimeID == null) {
+if (!AnimeID) {
     window.location = "./index.html";
 }
 
 async function loadData() {
     try {
-        let data = await getJson(animeapi + AnimeID);
-        data = data["results"];
-
-        if (data.source == "gogoanime") {
-            await loadAnimeFromGogo(data);
-        } else if (data.source == "anilist") {
-            await loadAnimeFromAnilist(data);
+        let data = await getJson(animeapi + encodeURIComponent(AnimeID));
+        
+        if (!data || !data.results) {
+            throw new Error("Invalid response from API");
         }
+        
+        data = data.results;
+
+        if (data.source === "gogoanime") {
+            await loadAnimeFromGogo(data);
+        } else if (data.source === "anilist") {
+            await loadAnimeFromAnilist(data);
+        } else {
+            throw new Error("Unknown data source");
+        }
+        
         RefreshLazyLoader();
     } catch (err) {
         document.getElementById("error-page").style.display = "block";
         document.getElementById("load").style.display = "none";
         document.getElementById("main-content").style.display = "none";
-        document.getElementById("error-desc").innerHTML = err;
+        document.getElementById("error-desc").innerHTML = err.message || "Unknown error occurred";
         console.error(err);
     }
 }
