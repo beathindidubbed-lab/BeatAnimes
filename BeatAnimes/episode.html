@@ -39,7 +39,381 @@
     <meta name="theme-color" content="#202125" />
     <link href="./css/episode.css" rel="stylesheet" />
 </head>
+<!-- Add this RIGHT AFTER the <header> tag in ALL your HTML files -->
 
+<!-- Mobile Menu Button -->
+<button id="menu-toggle" class="menu-toggle" aria-label="Toggle Menu">
+    <span></span>
+    <span></span>
+    <span></span>
+</button>
+
+<!-- Mobile Menu Overlay -->
+<div id="mobile-menu" class="mobile-menu">
+    <div class="mobile-menu-header">
+        <img src="./static/header.png" alt="Beat Animes" style="height: 40px;">
+        <button id="menu-close" class="menu-close">&times;</button>
+    </div>
+    
+    <nav class="mobile-menu-nav">
+        <a href="./index.html" class="menu-item">
+            <i class="fa fa-home"></i>
+            <span>Home</span>
+        </a>
+        
+        <a href="#popular-section" class="menu-item" onclick="scrollToSection('popular')">
+            <i class="fa fa-fire"></i>
+            <span>Most Popular</span>
+        </a>
+        
+        <a href="#recent-section" class="menu-item" onclick="scrollToSection('recent')">
+            <i class="fa fa-clock"></i>
+            <span>Recent Release</span>
+        </a>
+        
+        <a href="./search.html" class="menu-item">
+            <i class="fa fa-search"></i>
+            <span>Search Anime</span>
+        </a>
+        
+        <a href="#" class="menu-item" onclick="showWatchlist()">
+            <i class="fa fa-bookmark"></i>
+            <span>My Watchlist</span>
+        </a>
+        
+        <a href="#" class="menu-item" onclick="showContinueWatching()">
+            <i class="fa fa-play-circle"></i>
+            <span>Continue Watching</span>
+        </a>
+        
+        <div class="menu-divider"></div>
+        
+        <a href="https://t.me/Beat_Anime_Discussion" target="_blank" class="menu-item">
+            <i class="fa fa-paper-plane"></i>
+            <span>Telegram Group</span>
+        </a>
+        
+        <a href="https://github.com/beathindidubbed-lab/BeatAnimesBot" target="_blank" class="menu-item">
+            <i class="fa fa-github"></i>
+            <span>GitHub</span>
+        </a>
+    </nav>
+    
+    <div class="mobile-menu-footer">
+        <p>Made with <i class="fa fa-heart"></i> by Beat Anime</p>
+    </div>
+</div>
+
+<!-- Add this CSS to your existing CSS files or in a <style> tag -->
+<style>
+/* Menu Toggle Button */
+.menu-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1001;
+    background: linear-gradient(to right, #eb3349, #f45c43);
+    border: none;
+    border-radius: 8px;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.menu-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(235, 51, 73, 0.4);
+}
+
+.menu-toggle span {
+    width: 25px;
+    height: 3px;
+    background: white;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+.menu-toggle.active span:nth-child(1) {
+    transform: rotate(45deg) translate(7px, 7px);
+}
+
+.menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-toggle.active span:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+/* Mobile Menu */
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 300px;
+    height: 100vh;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+    z-index: 1000;
+    transition: left 0.3s ease;
+    overflow-y: auto;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.mobile-menu.active {
+    left: 0;
+}
+
+.mobile-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: linear-gradient(to right, #eb3349, #f45c43);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.menu-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 35px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-menu-nav {
+    padding: 20px 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 25px;
+    color: white;
+    text-decoration: none;
+    font-family: "Montserrat", sans-serif;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.menu-item:hover {
+    background: rgba(235, 51, 73, 0.2);
+    border-left-color: #eb3349;
+    padding-left: 30px;
+}
+
+.menu-item i {
+    font-size: 20px;
+    width: 25px;
+    text-align: center;
+    color: #eb3349;
+}
+
+.menu-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 15px 25px;
+}
+
+.mobile-menu-footer {
+    padding: 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: "Montserrat", sans-serif;
+    font-size: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-menu-footer i {
+    color: #eb3349;
+}
+
+/* Menu Overlay */
+#menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999;
+    display: none;
+    backdrop-filter: blur(5px);
+}
+
+#menu-overlay.active {
+    display: block;
+}
+
+/* Adjust existing header to accommodate menu button */
+@media only screen and (max-width: 768px) {
+    #head-div {
+        padding-left: 70px;
+    }
+    
+    #title1 {
+        width: calc(100% - 120px) !important;
+    }
+}
+
+/* Responsive adjustments */
+@media only screen and (min-width: 769px) {
+    .menu-toggle {
+        display: none;
+    }
+}
+</style>
+
+<!-- Add this JavaScript to your existing JS files or in a <script> tag -->
+<script>
+// Mobile Menu Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const menuToggle = document.getElementById('menu-toggle');
+    const menuClose = document.getElementById('menu-close');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'menu-overlay';
+    document.body.appendChild(overlay);
+    
+    function openMenu() {
+        mobileMenu.classList.add('active');
+        menuToggle.classList.add('active');
+        overlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeMenu() {
+        mobileMenu.classList.remove('active');
+        menuToggle.classList.remove('active');
+        overlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    menuToggle.addEventListener('click', function() {
+        if (mobileMenu.classList.contains('active')) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+    
+    menuClose.addEventListener('click', closeMenu);
+    overlay.addEventListener('click', closeMenu);
+    
+    // Close menu when clicking a menu item
+    const menuItems = document.querySelectorAll('.menu-item');
+    menuItems.forEach(item => {
+        item.addEventListener('click', function() {
+            if (!this.getAttribute('href').startsWith('#')) {
+                closeMenu();
+            }
+        });
+    });
+});
+
+// Scroll to section function
+function scrollToSection(section) {
+    closeMenu();
+    
+    let targetElement;
+    if (section === 'popular') {
+        targetElement = document.querySelector('.popularg')?.parentElement;
+    } else if (section === 'recent') {
+        targetElement = document.querySelector('.recento')?.parentElement;
+    }
+    
+    if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Watchlist functionality
+function showWatchlist() {
+    closeMenu();
+    const watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+    
+    if (watchlist.length === 0) {
+        alert('Your watchlist is empty! Add some anime to get started.');
+        return;
+    }
+    
+    // Redirect to a watchlist page or show modal
+    // For now, just alert
+    alert(`You have ${watchlist.length} anime in your watchlist!`);
+    // TODO: Implement watchlist page
+}
+
+// Continue watching functionality
+function showContinueWatching() {
+    closeMenu();
+    const progress = JSON.parse(localStorage.getItem('progress') || '{}');
+    const animeCount = Object.keys(progress).length;
+    
+    if (animeCount === 0) {
+        alert('No anime in progress! Start watching to see your progress here.');
+        return;
+    }
+    
+    alert(`You're watching ${animeCount} anime!`);
+    // TODO: Implement continue watching page
+}
+
+function closeMenu() {
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuToggle = document.getElementById('menu-toggle');
+    const overlay = document.getElementById('menu-overlay');
+    
+    if (mobileMenu) mobileMenu.classList.remove('active');
+    if (menuToggle) menuToggle.classList.remove('active');
+    if (overlay) overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Add anime to watchlist
+function addToWatchlist(animeId, animeName) {
+    let watchlist = JSON.parse(localStorage.getItem('watchlist') || '[]');
+    const anime = { id: animeId, name: animeName, addedAt: Date.now() };
+    
+    if (!watchlist.find(a => a.id === animeId)) {
+        watchlist.push(anime);
+        localStorage.setItem('watchlist', JSON.stringify(watchlist));
+        alert('Added to watchlist!');
+    } else {
+        alert('Already in watchlist!');
+    }
+}
+
+// Save watching progress
+function saveProgress(animeId, episodeId, currentTime) {
+    let progress = JSON.parse(localStorage.getItem('progress') || '{}');
+    progress[animeId] = {
+        episodeId: episodeId,
+        time: currentTime,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('progress', JSON.stringify(progress));
+}
+</script>
+    
 <body>
     <header id="head-div">
         <div id="title1">
@@ -164,6 +538,7 @@
 </body>
 
 </html>
+
 
 
 
