@@ -29,7 +29,9 @@ async function getJson(path, errCount = 0) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
         
-        return await response.json();
+        const data = await response.json();
+        console.log("Search API response:", data);
+        return data;
     } catch (errors) {
         console.error("Fetch error:", errors);
         return getJson(path, errCount + 1);
@@ -72,12 +74,20 @@ let hasNextPage = true;
 async function SearchAnime(query, page = 1) {
     try {
         const data = await getJson(searchapi + encodeURIComponent(query) + "?page=" + page);
+        console.log(`Search response for page ${page}:`, data);
 
-        if (!data || !data.results) {
-            throw new Error("No results found");
+        // Extract results from different possible structures
+        let animes = [];
+        if (data && data.results) {
+            if (Array.isArray(data.results.results)) {
+                animes = data.results.results;
+            } else if (Array.isArray(data.results)) {
+                animes = data.results;
+            }
+        } else if (Array.isArray(data)) {
+            animes = data;
         }
 
-        const animes = data.results;
         const contentdiv = document.getElementById("latest2");
         const loader = document.getElementById("load");
         
@@ -85,11 +95,12 @@ async function SearchAnime(query, page = 1) {
             throw new Error("Content div not found");
         }
 
-        if (!Array.isArray(animes) || animes.length === 0) {
+        if (animes.length === 0) {
             if (page === 1) {
-                throw new Error("No results found");
+                throw new Error(`No results found for "${query}". Try a different search term.`);
             }
-            return false; // No more results
+            console.log("No more results available");
+            return false;
         }
 
         let html = "";
@@ -102,7 +113,7 @@ async function SearchAnime(query, page = 1) {
             const id = anime.id || "";
             const url = "./anime.html?anime_id=" + encodeURIComponent(id);
             const image = anime.image || anime.img || "./static/loading1.gif";
-            const releaseDate = anime.releaseDate || anime.released || "Unknown";
+            const releaseDate = anime.releaseDate || anime.released || anime.release || "Unknown";
             
             let subOrDub = "SUB";
             if (title.toLowerCase().includes("dub")) {
@@ -129,6 +140,7 @@ async function SearchAnime(query, page = 1) {
         }
         
         contentdiv.innerHTML += html;
+        console.log(`Added ${animes.length} anime to search results`);
 
         if (loader) loader.style.display = "none";
         contentdiv.style.display = "block";
@@ -154,27 +166,34 @@ if (latestEl) {
 }
 
 // Load more results on scroll
+let isLoadingMore = false;
+
 window.addEventListener("scroll", () => {
+    if (isLoadingMore) return;
+    
     const scrollPosition = window.scrollY + window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
     
-    if (scrollPosition >= documentHeight - 100) {
-        if (hasNextPage) {
-            page += 1;
-            SearchAnime(query, page).then((hasMore) => {
-                hasNextPage = hasMore;
-                RefreshLazyLoader();
-                console.log("Search animes loaded - page", page);
-            }).catch(err => {
-                console.error("Failed to load more results:", err);
-                hasNextPage = false;
-            });
-        }
+    if (scrollPosition >= documentHeight - 100 && hasNextPage) {
+        isLoadingMore = true;
+        page += 1;
+        
+        SearchAnime(query, page).then((hasMore) => {
+            hasNextPage = hasMore;
+            RefreshLazyLoader();
+            console.log(`Search page ${page} loaded - hasNextPage: ${hasMore}`);
+            isLoadingMore = false;
+        }).catch(err => {
+            console.error("Failed to load more results:", err);
+            hasNextPage = false;
+            isLoadingMore = false;
+        });
     }
 });
 
 async function loadData() {
     try {
+        console.log(`Starting search for: ${query}`);
         const hasMore = await SearchAnime(query, page);
         hasNextPage = hasMore;
         RefreshLazyLoader();
