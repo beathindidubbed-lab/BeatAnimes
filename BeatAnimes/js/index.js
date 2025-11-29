@@ -32,10 +32,11 @@ async function getJson(path, errCount = 0) {
         }
         
         const data = await response.json();
+        console.log(`API Response from ${path}:`, data);
         return data;
     } catch (errors) {
         console.error("Fetch error:", errors);
-        await sleep(1000 * (errCount + 1)); // Exponential backoff
+        await sleep(1000 * (errCount + 1));
         return getJson(path, errCount + 1);
     }
 }
@@ -48,15 +49,16 @@ function genresToString(genres) {
 function shuffle(array) {
     if (!array || !Array.isArray(array)) return [];
     let currentIndex = array.length, randomIndex;
+    const newArray = [...array]; // Create a copy
     while (currentIndex > 0) {
         randomIndex = Math.floor(Math.random() * currentIndex);
         currentIndex--;
-        [array[currentIndex], array[randomIndex]] = [
-            array[randomIndex],
-            array[currentIndex],
+        [newArray[currentIndex], newArray[randomIndex]] = [
+            newArray[randomIndex],
+            newArray[currentIndex],
         ];
     }
-    return array;
+    return newArray;
 }
 
 // Adding slider animes (trending animes from anilist)
@@ -114,19 +116,33 @@ async function getTrendingAnimes(data) {
             '<a class="prev" onclick="plusSlides(-1)">&#10094;</a>' +
             '<a class="next" onclick="plusSlides(1)">&#10095;</a>';
     }
+    
+    console.log(`Trending slider created with ${Math.min(data.length, 10)} slides`);
 }
 
 // Adding popular animes (popular animes from gogoanime)
 async function getPopularAnimes(data) {
-    if (!data || !data.results || !Array.isArray(data.results) || data.results.length === 0) {
+    console.log("getPopularAnimes received:", data);
+    
+    // Handle different data structures
+    let results = [];
+    if (Array.isArray(data)) {
+        results = data;
+    } else if (data && data.results && Array.isArray(data.results)) {
+        results = data.results;
+    } else if (data && Array.isArray(data.gogoPopular)) {
+        results = data.gogoPopular;
+    }
+
+    if (results.length === 0) {
         console.warn("No popular anime data available");
         return;
     }
 
     let POPULAR_HTML = "";
 
-    for (let pos = 0; pos < Math.min(data.results.length, 20); pos++) {
-        let anime = data.results[pos];
+    for (let pos = 0; pos < Math.min(results.length, 20); pos++) {
+        let anime = results[pos];
         if (!anime) continue;
         
         let title = anime.title || "Unknown Anime";
@@ -155,6 +171,7 @@ async function getPopularAnimes(data) {
     const container = document.querySelector(".popularg");
     if (container) {
         container.innerHTML = POPULAR_HTML;
+        console.log(`Popular section created with ${Math.min(results.length, 20)} anime`);
     }
 }
 
@@ -162,16 +179,29 @@ async function getPopularAnimes(data) {
 async function getRecentAnimes(page = 1) {
     try {
         const data = await getJson(recentapi + page);
+        console.log("Recent animes data:", data);
         
-        if (!data || !data.results || !Array.isArray(data.results) || data.results.length === 0) {
+        // Handle different data structures
+        let results = [];
+        if (data && data.results && Array.isArray(data.results.results)) {
+            results = data.results.results;
+        } else if (data && data.results && Array.isArray(data.results)) {
+            results = data.results;
+        } else if (data && Array.isArray(data.gogoRecent)) {
+            results = data.gogoRecent;
+        } else if (Array.isArray(data)) {
+            results = data;
+        }
+
+        if (results.length === 0) {
             console.warn(`No recent anime data for page ${page}`);
             return;
         }
 
         let RECENT_HTML = "";
 
-        for (let pos = 0; pos < data.results.length; pos++) {
-            let anime = data.results[pos];
+        for (let pos = 0; pos < results.length; pos++) {
+            let anime = results[pos];
             if (!anime) continue;
             
             let title = anime.title || "Unknown Anime";
@@ -181,7 +211,7 @@ async function getRecentAnimes(page = 1) {
             let ep = "?";
             
             if (anime.episode) {
-                const epMatch = anime.episode.match(/\d+/);
+                const epMatch = String(anime.episode).match(/\d+/);
                 ep = epMatch ? epMatch[0] : "?";
             }
             
@@ -207,6 +237,7 @@ async function getRecentAnimes(page = 1) {
         const container = document.querySelector(".recento");
         if (container) {
             container.innerHTML += RECENT_HTML;
+            console.log(`Recent section updated with ${results.length} anime`);
         }
         
         RefreshLazyLoader();
@@ -310,7 +341,7 @@ async function loadAnimes() {
         page += 1;
     } catch (error) {
         console.error(`Failed to load page ${page}:`, error);
-        page += 1; // Skip this page
+        page += 1;
     } finally {
         isLoading = false;
     }
@@ -337,12 +368,15 @@ async function initializePage() {
         const data = await getJson(IndexApi);
         console.log("Home data received:", data);
 
+        // Extract data from response
+        let homeData = data.results || data;
+        
         // Handle trending/slider data
         let trendingData = null;
-        if (data.trending?.media) {
-            trendingData = data.trending.media;
-        } else if (data.trending && Array.isArray(data.trending)) {
-            trendingData = data.trending;
+        if (homeData.trending && Array.isArray(homeData.trending)) {
+            trendingData = homeData.trending;
+        } else if (homeData.anilistTrending && Array.isArray(homeData.anilistTrending)) {
+            trendingData = homeData.anilistTrending;
         }
 
         if (trendingData && trendingData.length > 0) {
@@ -358,16 +392,22 @@ async function initializePage() {
         }
 
         // Handle popular data
-        if (data.popular) {
-            const shuffledPopular = { 
-                results: shuffle([...(data.popular.results || data.popular)]) 
-            };
-            await getPopularAnimes(shuffledPopular);
-            RefreshLazyLoader();
-            console.log("Popular animes loaded");
+        let popularData = null;
+        if (homeData.popular) {
+            popularData = homeData.popular;
+        } else if (homeData.gogoPopular) {
+            popularData = homeData.gogoPopular;
         }
 
-        // Handle recent data
+        if (popularData) {
+            await getPopularAnimes(popularData);
+            RefreshLazyLoader();
+            console.log("Popular animes loaded");
+        } else {
+            console.warn("No popular data available");
+        }
+
+        // Handle recent data - Load from /recent/1 endpoint instead
         await getRecentAnimes(1);
         console.log("Recent animes loaded");
 
@@ -381,6 +421,7 @@ async function initializePage() {
                 <div style="color: white; text-align: center; padding: 40px;">
                     <h2 style="color: #eb3349; margin-bottom: 20px;">Failed to Load Content</h2>
                     <p style="margin-bottom: 20px;">${error.message}</p>
+                    <p style="margin-bottom: 20px;">API Status: Checking...</p>
                     <button onclick="location.reload()" 
                             style="background: #eb3349; color: white; padding: 10px 20px; 
                                    border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
@@ -388,6 +429,22 @@ async function initializePage() {
                     </button>
                 </div>
             `;
+            
+            // Test API connection
+            fetch('https://beatanimesapi.onrender.com/ping')
+                .then(r => r.json())
+                .then(d => {
+                    if (loadElement.querySelector('p:nth-child(3)')) {
+                        loadElement.querySelector('p:nth-child(3)').textContent = 
+                            'API Status: ✅ Online (but data loading failed)';
+                    }
+                })
+                .catch(() => {
+                    if (loadElement.querySelector('p:nth-child(3)')) {
+                        loadElement.querySelector('p:nth-child(3)').textContent = 
+                            'API Status: ❌ Offline';
+                    }
+                });
         }
     }
 }
