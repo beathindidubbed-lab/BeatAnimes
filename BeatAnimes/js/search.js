@@ -1,39 +1,22 @@
-// Api urls
 const searchapi = "/search/";
-
-// Api Server Manager
 const AvailableServers = ["https://beatanimesapi.onrender.com"];
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
 }
 
-// Useful functions
 async function getJson(path, errCount = 0) {
     const ApiServer = getApiServer();
-    let url = ApiServer + path;
-
-    if (errCount > 2) {
-        throw new Error(`Too many errors while fetching ${url}`);
-    }
+    if (errCount > 2) throw new Error(`Too many errors`);
 
     try {
-        const _url_of_site = new URL(window.location.href);
-        const referer = _url_of_site.origin;
-        const response = await fetch(url, { 
-            headers: { referer: referer },
+        const response = await fetch(ApiServer + path, { 
+            headers: { referer: window.location.origin },
             cache: 'no-cache'
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        const data = await response.json();
-        console.log("Search API response:", data);
-        return data;
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return await response.json();
     } catch (errors) {
-        console.error("Fetch error:", errors);
         return getJson(path, errCount + 1);
     }
 }
@@ -50,75 +33,75 @@ async function RefreshLazyLoader() {
                 }
             }
         });
-    }, {
-        rootMargin: "50px"
-    });
+    }, { rootMargin: "50px" });
     
-    const arr = document.querySelectorAll("img.lzy_img");
-    arr.forEach((v) => {
-        imageObserver.observe(v);
-    });
+    document.querySelectorAll("img.lzy_img").forEach(v => imageObserver.observe(v));
 }
 
 function sentenceCase(str) {
-    if (!str || str === null || str === "") return "";
-    str = str.toString();
-    return str.replace(/\w\S*/g, function (txt) {
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
+    if (!str) return "";
+    return str.toString().replace(/\w\S*/g, txt => 
+        txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+    );
 }
 
 let hasNextPage = true;
 
-// Search function to get anime from gogo
+// FIX: Show "Not Found" message instead of error
 async function SearchAnime(query, page = 1) {
     try {
         const data = await getJson(searchapi + encodeURIComponent(query) + "?page=" + page);
-        console.log(`Search response for page ${page}:`, data);
 
-        // Extract results from different possible structures
         let animes = [];
-        if (data && data.results) {
-            if (Array.isArray(data.results.results)) {
-                animes = data.results.results;
-            } else if (Array.isArray(data.results)) {
-                animes = data.results;
-            }
-        } else if (Array.isArray(data)) {
-            animes = data;
-        }
+        if (data?.results?.results) animes = data.results.results;
+        else if (data?.results) animes = data.results;
+        else if (Array.isArray(data)) animes = data;
 
         const contentdiv = document.getElementById("latest2");
         const loader = document.getElementById("load");
-        
-        if (!contentdiv) {
-            throw new Error("Content div not found");
-        }
 
         if (animes.length === 0) {
             if (page === 1) {
-                throw new Error(`No results found for "${query}". Try a different search term.`);
+                // Show "Not Found" message instead of error
+                contentdiv.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; width: 100%;">
+                        <i class="fa fa-search" style="font-size: 80px; color: #eb3349; margin-bottom: 20px;"></i>
+                        <h2 style="color: white; font-family: 'Montserrat', sans-serif; margin-bottom: 15px;">
+                            No Results Found
+                        </h2>
+                        <p style="color: #999; font-family: 'Montserrat', sans-serif; font-size: 16px; margin-bottom: 25px;">
+                            We couldn't find any anime matching "<strong style="color: #eb3349;">${query}</strong>"
+                        </p>
+                        <p style="color: #999; font-family: 'Montserrat', sans-serif; font-size: 14px; margin-bottom: 20px;">
+                            Try searching with:
+                        </p>
+                        <ul style="color: #999; text-align: left; max-width: 400px; margin: 0 auto; list-style: none; padding: 0;">
+                            <li style="margin: 10px 0;"><i class="fa fa-check" style="color: #eb3349; margin-right: 10px;"></i>Different keywords</li>
+                            <li style="margin: 10px 0;"><i class="fa fa-check" style="color: #eb3349; margin-right: 10px;"></i>English or Japanese title</li>
+                            <li style="margin: 10px 0;"><i class="fa fa-check" style="color: #eb3349; margin-right: 10px;"></i>Fewer words</li>
+                        </ul>
+                        <a href="./index.html" style="display: inline-block; margin-top: 30px; background: linear-gradient(to right, #eb3349, #f45c43); color: white; padding: 12px 30px; border-radius: 25px; text-decoration: none; font-family: 'Montserrat', sans-serif;">
+                            <i class="fa fa-home"></i> Back to Home
+                        </a>
+                    </div>
+                `;
+                contentdiv.style.display = "block";
+                if (loader) loader.style.display = "none";
+                return false;
             }
-            console.log("No more results available");
             return false;
         }
 
         let html = "";
-
-        for (let i = 0; i < animes.length; i++) {
-            const anime = animes[i];
+        for (let anime of animes) {
             if (!anime) continue;
             
-            const title = anime.title || "Unknown Anime";
+            const title = anime.title || "Unknown";
             const id = anime.id || "";
             const url = "./anime.html?anime_id=" + encodeURIComponent(id);
-            const image = anime.image || anime.img || "./static/loading1.gif";
-            const releaseDate = anime.releaseDate || anime.released || anime.release || "Unknown";
-            
-            let subOrDub = "SUB";
-            if (title.toLowerCase().includes("dub")) {
-                subOrDub = "DUB";
-            }
+            const image = anime.image || "./static/loading1.gif";
+            const releaseDate = anime.releaseDate || anime.released || "Unknown";
+            const subOrDub = title.toLowerCase().includes("dub") ? "DUB" : "SUB";
 
             html += `<a href="${url}">
                 <div class="poster la-anime">
@@ -127,21 +110,17 @@ async function SearchAnime(query, page = 1) {
                     </div>
                     <div id="shadow2" class="shadow">
                         <img class="lzy_img" src="./static/loading1.gif" data-src="${image}" 
-                             onerror="this.src='./static/loading1.gif'" alt="${title}">
+                             onerror="this.src='./static/loading1.gif'">
                     </div>
                     <div class="la-details">
                         <h3>${sentenceCase(title)}</h3>
-                        <div id="extra">
-                            <span>${releaseDate}</span>
-                        </div>
+                        <div id="extra"><span>${releaseDate}</span></div>
                     </div>
                 </div>
             </a>`;
         }
         
         contentdiv.innerHTML += html;
-        console.log(`Added ${animes.length} anime to search results`);
-
         if (loader) loader.style.display = "none";
         contentdiv.style.display = "block";
 
@@ -160,31 +139,25 @@ if (!query || query.trim() === "") {
     window.location.replace("./index.html");
 }
 
-const latestEl = document.getElementById("latest");
-if (latestEl) {
-    latestEl.innerHTML = `Search Results: ${query}`;
-}
+document.getElementById("latest").innerHTML = `Search Results: ${query}`;
 
-// Load more results on scroll
 let isLoadingMore = false;
 
 window.addEventListener("scroll", () => {
-    if (isLoadingMore) return;
+    if (isLoadingMore || !hasNextPage) return;
     
     const scrollPosition = window.scrollY + window.innerHeight;
     const documentHeight = document.documentElement.scrollHeight;
     
-    if (scrollPosition >= documentHeight - 100 && hasNextPage) {
+    if (scrollPosition >= documentHeight - 100) {
         isLoadingMore = true;
-        page += 1;
+        page++;
         
         SearchAnime(query, page).then((hasMore) => {
             hasNextPage = hasMore;
             RefreshLazyLoader();
-            console.log(`Search page ${page} loaded - hasNextPage: ${hasMore}`);
             isLoadingMore = false;
-        }).catch(err => {
-            console.error("Failed to load more results:", err);
+        }).catch(() => {
             hasNextPage = false;
             isLoadingMore = false;
         });
@@ -193,26 +166,18 @@ window.addEventListener("scroll", () => {
 
 async function loadData() {
     try {
-        console.log(`Starting search for: ${query}`);
         const hasMore = await SearchAnime(query, page);
         hasNextPage = hasMore;
         RefreshLazyLoader();
-        console.log("Initial search results loaded");
     } catch (err) {
         console.error("Search failed:", err);
-        
-        const mainSection = document.getElementById("main-section");
-        const errorPage = document.getElementById("error-page");
-        const errorDesc = document.getElementById("error-desc");
-        const loader = document.getElementById("load");
-        
-        if (mainSection) mainSection.style.display = "none";
-        if (errorPage) errorPage.style.display = "block";
-        if (loader) loader.style.display = "none";
-        
-        if (errorDesc) {
-            errorDesc.innerHTML = err.message || "Search failed. Please try again.";
-        }
+        document.getElementById("latest2").innerHTML = `
+            <div style="text-align: center; padding: 40px; width: 100%;">
+                <h2 style="color: #eb3349;">Search Failed</h2>
+                <p style="color: white;">Please try again</p>
+            </div>
+        `;
+        document.getElementById("load").style.display = "none";
     }
 }
 
