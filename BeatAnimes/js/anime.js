@@ -32,7 +32,7 @@ async function getJson(path, errCount = 0) {
         
         return await response.json();
     } catch (errors) {
-        console.error(errors);
+        console.error(`Fetch error (attempt ${errCount + 1}):`, errors);
         return getJson(path, errCount + 1);
     }
 }
@@ -96,17 +96,27 @@ function getAnilistOtherTitle(title, current) {
 
 // Function to get anime info from gogo id
 async function loadAnimeFromGogo(data) {
-    // CRITICAL NULL CHECKS
+    console.log("📺 Loading GogoAnime data:", data);
+    
     if (!data) {
         throw new Error("No anime data received from API");
     }
 
     const name = data.name || "Unknown Anime";
     const image = data.image || "./static/loading1.gif";
-    const episodes = data.episodes || [];
-    const plot_summary = data.plot_summary || "No description available.";
-    const other_name = data.other_name || "N/A";
-    const released = data.released || "Unknown";
+    
+    // CRITICAL FIX: Handle episodes array correctly
+    let episodes = [];
+    if (data.episodes && Array.isArray(data.episodes)) {
+        episodes = data.episodes;
+        console.log(`✅ Found ${episodes.length} episodes`);
+    } else {
+        console.warn("⚠️ No episodes array found in response");
+    }
+    
+    const plot_summary = data.plot_summary || data.synopsis || data.description || "No description available.";
+    const other_name = data.other_name || data.otherNames || "N/A";
+    const released = data.released || data.releaseYear || data.release || "Unknown";
     const status = data.status || "Unknown";
     const type = data.type || "TV";
     
@@ -142,20 +152,30 @@ async function loadAnimeFromGogo(data) {
     }, 100);
 
     if (episodes.length === 0) {
-        const ephtml = '<a id="no-ep-found" class="ep-btn">No Episodes Found</a>';
+        console.warn("⚠️ No episodes available for this anime");
+        const ephtml = '<a id="no-ep-found" class="ep-btn" style="cursor: default;">No Episodes Found - Anime may not be available yet</a>';
         document.getElementById("ep-lower-div").innerHTML = ephtml;
         document.getElementById("ep-divo-outer").style.display = "block";
         document.getElementById("ep-upper-div").style.display = "none";
         document.getElementById('ep-lower-div').style.gridTemplateColumns = "unset";
-        const noEpBtn = document.getElementById('no-ep-found');
-        if (noEpBtn) noEpBtn.style.width = "100%";
+        
+        // Hide watch button if no episodes
+        const watchBtn = document.getElementById("watch-btn");
+        if (watchBtn) {
+            watchBtn.style.opacity = "0.5";
+            watchBtn.style.cursor = "not-allowed";
+            watchBtn.onclick = (e) => {
+                e.preventDefault();
+                alert("No episodes available yet for this anime.");
+            };
+        }
     } else {
         const watchBtn = document.getElementById("watch-btn");
         if (watchBtn && episodes[0] && episodes[0][1]) {
             watchBtn.href = "./episode.html?anime_id=" + AnimeID + "&episode_id=" + episodes[0][1];
         }
 
-        console.log("Anime Info loaded");
+        console.log("✅ Anime Info loaded");
         RefreshLazyLoader();
 
         getEpSlider(episodes);
@@ -167,12 +187,14 @@ async function loadAnimeFromGogo(data) {
 
 // Function to get anime info from anilist search
 async function loadAnimeFromAnilist(data) {
+    console.log("📺 Loading Anilist data (no episodes available):", data);
+    
     if (!data) {
         throw new Error("No anime data received from Anilist");
     }
 
     const title = getAnilistTitle(data.title);
-    const coverImage = data.coverImage?.large || "./static/loading1.gif";
+    const coverImage = data.coverImage?.large || data.coverImage?.medium || "./static/loading1.gif";
     const episodes = data.episodes || "?";
     const format = data.format || "TV";
     const description = data.description 
@@ -199,7 +221,7 @@ async function loadAnimeFromAnilist(data) {
     document.getElementById("main-content").style.display = "block";
     document.getElementById("load").style.display = "none";
 
-    console.log("Anime Info loaded from Anilist");
+    console.log("✅ Anime Info loaded from Anilist");
 
     const recommendations = data.recommendations || [];
     let rechtml = "";
@@ -239,10 +261,10 @@ async function loadAnimeFromAnilist(data) {
     
     document.getElementById("latest2").innerHTML = rechtml;
     document.getElementById("ep-lower-div").innerHTML = 
-        '<a class="ep-btn">Anime Name Not Found On GogoAnime. Try Searching With A Different Name...</a>';
+        '<a class="ep-btn" style="cursor: default;">This anime is not available on GogoAnime yet. Try searching with the Japanese title or wait for it to be released.</a>';
 
     RefreshLazyLoader();
-    console.log("Anime Recommendations loaded");
+    console.log("✅ Anime Recommendations loaded");
 }
 
 // Function to get episode Slider
@@ -279,7 +301,7 @@ async function getEpSlider(total) {
         document.getElementById("ep-slider").innerHTML = ephtml;
         document.getElementById("slider-main").style.display = "block";
         RefreshLazyLoader();
-        console.log("Episode Slider loaded");
+        console.log("✅ Episode Slider loaded");
     } catch (err) {
         console.error("Episode slider error:", err);
     }
@@ -346,7 +368,7 @@ async function getEpList(total) {
     
     document.getElementById("ep-upper-div").innerHTML = html;
     document.getElementById("ep-divo-outer").style.display = "block";
-    console.log("Episode list loaded");
+    console.log("✅ Episode list loaded");
 }
 
 async function getEpLowerList(start, end) {
@@ -437,7 +459,7 @@ async function getRecommendations(anime_title) {
     
     document.getElementById("latest2").innerHTML = rechtml;
     if (loadElem) loadElem.style.display = "none";
-    console.log("Anime Recommendations loaded");
+    console.log("✅ Anime Recommendations loaded");
     RefreshLazyLoader();
 }
 
@@ -466,7 +488,11 @@ if (!AnimeID) {
 
 async function loadData() {
     try {
+        console.log(`🔍 Loading anime: ${AnimeID}`);
+        
         let data = await getJson(animeapi + encodeURIComponent(AnimeID));
+        
+        console.log("📦 API Response:", data);
         
         if (!data || !data.results) {
             throw new Error("Invalid response from API");
@@ -484,12 +510,17 @@ async function loadData() {
         
         RefreshLazyLoader();
     } catch (err) {
+        console.error("❌ Error loading anime:", err);
         document.getElementById("error-page").style.display = "block";
         document.getElementById("load").style.display = "none";
         document.getElementById("main-content").style.display = "none";
         document.getElementById("error-desc").innerHTML = err.message || "Unknown error occurred";
-        console.error(err);
     }
 }
+
+// Make functions global
+window.plusSlides = plusSlides;
+window.episodeSelectChange = episodeSelectChange;
+window.retryImageLoad = retryImageLoad;
 
 loadData();
