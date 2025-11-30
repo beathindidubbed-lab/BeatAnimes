@@ -1995,4 +1995,48 @@ h2 {
     #title1 img {
         height: 55px;
     }
+/* Language and Quality Selectors for Telegram */
+.language-selector {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.lang-btn {
+    background: #35373d;
+    color: #ccc;
+    border: 2px solid transparent;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: "Montserrat", sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.lang-btn:hover {
+    background: #4a4c52;
+}
+
+.lang-btn.active {
+    background: #ed3832;
+    color: white;
+    border-color: #ed3832;
+}
+
+.quality-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.quality-selector .sitem {
+    margin: 0;
+}
+
+.quality-selector .sobtn {
+    min-width: 100px;
+    text-align: center;
 }
