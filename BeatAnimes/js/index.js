@@ -12,7 +12,7 @@ async function getJson(path, errCount = 0) {
     let url = ApiServer + path;
 
     if (errCount > 2) {
-        throw new Error(`Too many errors while fetching ${url}`);
+        throw new Error(`Failed to fetch: ${path}`);
     }
 
     try {
@@ -24,65 +24,33 @@ async function getJson(path, errCount = 0) {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return await response.json();
     } catch (errors) {
-        console.error(errors);
+        console.error(`Fetch error (attempt ${errCount + 1}):`, errors);
         await new Promise(r => setTimeout(r, 1000 * (errCount + 1)));
         return getJson(path, errCount + 1);
     }
 }
 
-// FIX: Extract GogoAnime data from API response structure
-function extractGogoData(homeData) {
-    // Try multiple possible structures
-    if (homeData.popular && Array.isArray(homeData.popular.results)) {
-        return homeData.popular.results;
-    }
-    if (homeData.popular && Array.isArray(homeData.popular)) {
-        return homeData.popular;
-    }
-    if (homeData.gogoPopular && Array.isArray(homeData.gogoPopular)) {
-        return homeData.gogoPopular;
-    }
-    if (homeData.results && homeData.results.popular) {
-        return extractGogoData(homeData.results);
-    }
-    return [];
-}
-
-function extractRecentData(homeData) {
-    if (homeData.recent && Array.isArray(homeData.recent.results)) {
-        return homeData.recent.results;
-    }
-    if (homeData.recent && Array.isArray(homeData.recent)) {
-        return homeData.recent;
-    }
-    if (homeData.gogoRecent && Array.isArray(homeData.gogoRecent)) {
-        return homeData.gogoRecent;
-    }
-    if (homeData.results && homeData.results.recent) {
-        return extractRecentData(homeData.results);
-    }
-    return [];
-}
-
-// Banner with GogoAnime data
-async function getTrendingAnimes(gogoPopular) {
-    if (!gogoPopular || gogoPopular.length === 0) {
-        console.warn("No GogoAnime data for banner");
+// Banner section - uses GogoAnime popular data
+async function getTrendingAnimes(popularData) {
+    if (!popularData || popularData.length === 0) {
+        console.warn("⚠️ No data for banner");
         return;
     }
 
+    console.log(`📺 Loading banner with ${popularData.length} anime...`);
+
     let SLIDER_HTML = "";
     
-    for (let pos = 0; pos < Math.min(gogoPopular.length, 10); pos++) {
-        let anime = gogoPopular[pos];
-        if (!anime || !anime.title || !anime.id) continue;
+    for (let pos = 0; pos < Math.min(popularData.length, 10); pos++) {
+        let anime = popularData[pos];
+        if (!anime) continue;
         
-        let title = anime.title;
-        let id = anime.id;
-        let type = "TV";
-        let status = anime.release || "Available";
+        let title = anime.title || anime.name || "Unknown";
+        let id = anime.id || "";
+        let type = anime.type || "TV";
+        let status = anime.release || anime.released || "Available";
         let url = "./anime.html?anime_id=" + encodeURIComponent(id);
-        let poster = anime.image || "./static/loading1.gif";
+        let poster = anime.image || anime.poster || "./static/loading1.gif";
 
         SLIDER_HTML += `<div class="mySlides fade">
             <div class="data-slider">
@@ -115,27 +83,31 @@ async function getTrendingAnimes(gogoPopular) {
             '<a class="prev" onclick="plusSlides(-1)">&#10094;</a>' +
             '<a class="next" onclick="plusSlides(1)">&#10095;</a>';
     }
+    
+    console.log("✅ Banner loaded successfully");
 }
 
 // Most Popular section
-async function getPopularAnimes(gogoPopular) {
-    if (!gogoPopular || gogoPopular.length === 0) {
-        console.warn("No popular anime data");
-        document.querySelector(".popularg").innerHTML = '<p style="color: white; padding: 20px;">No popular anime available</p>';
+async function getPopularAnimes(popularData) {
+    if (!popularData || popularData.length === 0) {
+        console.warn("⚠️ No popular anime data");
+        document.querySelector(".popularg").innerHTML = '<p style="color: white; padding: 20px;">Loading popular anime...</p>';
         return;
     }
 
+    console.log(`🔥 Loading popular section with ${popularData.length} anime...`);
+
     let POPULAR_HTML = "";
 
-    for (let pos = 0; pos < Math.min(gogoPopular.length, 20); pos++) {
-        let anime = gogoPopular[pos];
-        if (!anime || !anime.title || !anime.id) continue;
+    for (let pos = 0; pos < Math.min(popularData.length, 20); pos++) {
+        let anime = popularData[pos];
+        if (!anime) continue;
         
-        let title = anime.title;
-        let id = anime.id;
+        let title = anime.title || anime.name || "Unknown";
+        let id = anime.id || "";
         let url = "./anime.html?anime_id=" + encodeURIComponent(id);
-        let image = anime.image || "./static/loading1.gif";
-        let subOrDub = title.toLowerCase().includes("dub") ? "DUB" : "SUB";
+        let image = anime.image || anime.poster || "./static/loading1.gif";
+        let subOrDub = (title.toLowerCase().includes("dub") || anime.isDub) ? "DUB" : "SUB";
 
         POPULAR_HTML += `<a href="${url}">
             <div class="poster la-anime">
@@ -155,26 +127,31 @@ async function getPopularAnimes(gogoPopular) {
     }
 
     document.querySelector(".popularg").innerHTML = POPULAR_HTML;
+    console.log("✅ Popular section loaded");
 }
 
-// Recent section with initial data
+// Recent section - initial load
 async function initRecentSection(recentData) {
     if (!recentData || recentData.length === 0) {
-        console.warn("No recent data from home API");
+        console.warn("⚠️ No recent data");
         return;
     }
+
+    console.log(`⏰ Loading recent section with ${recentData.length} anime...`);
 
     let RECENT_HTML = "";
 
     for (let anime of recentData) {
         if (!anime) continue;
         
-        let title = anime.title || "Unknown";
+        let title = anime.title || anime.name || "Unknown";
         let id = (anime.id || "").split("-episode-")[0];
+        if (!id) id = anime.animeId || "";
+        
         let url = "./anime.html?anime_id=" + encodeURIComponent(id);
-        let image = anime.image || "./static/loading1.gif";
-        let ep = String(anime.episode || "").match(/\d+/)?.[0] || "?";
-        let subOrDub = title.toLowerCase().includes("dub") ? "DUB" : "SUB";
+        let image = anime.image || anime.poster || "./static/loading1.gif";
+        let ep = String(anime.episode || anime.episodeNumber || "").match(/\d+/)?.[0] || "?";
+        let subOrDub = (title.toLowerCase().includes("dub") || anime.isDub) ? "DUB" : "SUB";
 
         RECENT_HTML += `<a href="${url}">
             <div class="poster la-anime">
@@ -194,15 +171,16 @@ async function initRecentSection(recentData) {
     }
 
     document.querySelector(".recento").innerHTML = RECENT_HTML;
+    console.log("✅ Recent section loaded");
 }
 
 // Load more recent anime
-let recentPage = 2; // Start from page 2 since page 1 is loaded from /home
+let recentPage = 2;
 let isLoadingRecent = false;
 let hasMoreRecent = true;
 
 async function getRecentAnimes(page = 2) {
-    if (isLoadingRecent) return;
+    if (isLoadingRecent) return false;
     
     try {
         isLoadingRecent = true;
@@ -223,12 +201,14 @@ async function getRecentAnimes(page = 2) {
         for (let anime of results) {
             if (!anime) continue;
             
-            let title = anime.title || "Unknown";
+            let title = anime.title || anime.name || "Unknown";
             let id = (anime.id || "").split("-episode-")[0];
+            if (!id) id = anime.animeId || "";
+            
             let url = "./anime.html?anime_id=" + encodeURIComponent(id);
-            let image = anime.image || "./static/loading1.gif";
-            let ep = String(anime.episode || "").match(/\d+/)?.[0] || "?";
-            let subOrDub = title.toLowerCase().includes("dub") ? "DUB" : "SUB";
+            let image = anime.image || anime.poster || "./static/loading1.gif";
+            let ep = String(anime.episode || anime.episodeNumber || "").match(/\d+/)?.[0] || "?";
+            let subOrDub = (title.toLowerCase().includes("dub") || anime.isDub) ? "DUB" : "SUB";
 
             RECENT_HTML += `<a href="${url}">
                 <div class="poster la-anime">
@@ -381,69 +361,94 @@ async function RefreshLazyLoader() {
     document.querySelectorAll("img.lzy_img").forEach(v => imageObserver.observe(v));
 }
 
-// Initialize page
+// MAIN INITIALIZATION
 async function initializePage() {
     try {
+        console.log("🚀 Starting BeatAnimes...");
         document.getElementById("load").style.display = "block";
 
-        console.log("Fetching home data...");
-        const data = await getJson(IndexApi);
-        console.log("Home API Response:", data);
+        // Fetch home data
+        console.log("📡 Fetching /home API...");
+        const homeResponse = await getJson(IndexApi);
+        console.log("📦 Home API Response:", homeResponse);
         
-        // Extract data from various possible structures
-        let homeData = data.results || data;
+        // Extract data - handle multiple structures
+        let homeData = homeResponse.results || homeResponse;
         
-        const gogoPopular = extractGogoData(homeData);
-        const recentData = extractRecentData(homeData);
+        // Extract popular anime (for banner and popular section)
+        let popularData = [];
+        if (homeData.popular) {
+            if (Array.isArray(homeData.popular)) {
+                popularData = homeData.popular;
+            } else if (homeData.popular.results) {
+                popularData = homeData.popular.results;
+            }
+        } else if (homeData.gogoPopular) {
+            popularData = homeData.gogoPopular;
+        } else if (homeData.trending) {
+            popularData = homeData.trending;
+        }
         
-        console.log("Extracted GogoAnime Popular:", gogoPopular.length, "items");
-        console.log("Extracted Recent:", recentData.length, "items");
+        // Extract recent anime
+        let recentData = [];
+        if (homeData.recent) {
+            if (Array.isArray(homeData.recent)) {
+                recentData = homeData.recent;
+            } else if (homeData.recent.results) {
+                recentData = homeData.recent.results;
+            }
+        } else if (homeData.gogoRecent) {
+            recentData = homeData.gogoRecent;
+        }
+        
+        console.log(`📊 Extracted: ${popularData.length} popular, ${recentData.length} recent`);
 
-        // Load banner with GogoAnime data
-        if (gogoPopular.length > 0) {
-            await getTrendingAnimes(gogoPopular);
+        // Load all sections
+        if (popularData.length > 0) {
+            await getTrendingAnimes(popularData);
+            await getPopularAnimes(popularData);
+            
+            // Start slider
             slideIndex = 1;
             showSlides(slideIndex);
             showSlides2();
-            console.log("✅ Banner loaded");
         } else {
-            console.warn("⚠️ No data for banner");
+            console.error("❌ No popular data - banner and popular sections will be empty");
         }
 
-        // Load Most Popular section
-        if (gogoPopular.length > 0) {
-            await getPopularAnimes(gogoPopular);
-            console.log("✅ Popular section loaded");
-        } else {
-            console.warn("⚠️ No data for popular section");
-        }
-
-        // Load initial Recent section
         if (recentData.length > 0) {
             await initRecentSection(recentData);
-            console.log("✅ Recent section loaded");
         } else {
-            console.warn("⚠️ No data for recent section");
+            console.warn("⚠️ No recent data from /home, will try /recent/1");
+            await getRecentAnimes(1);
         }
 
         createLoadMoreButton();
         RefreshLazyLoader();
+        
         document.getElementById("load").style.display = "none";
+        console.log("✅ Page loaded successfully!");
 
     } catch (error) {
-        console.error("❌ Init error:", error);
+        console.error("❌ Fatal error:", error);
         document.getElementById("load").innerHTML = `
             <div style="color: white; text-align: center; padding: 40px;">
-                <h2 style="color: #eb3349;">Failed to Load</h2>
-                <p>${error.message}</p>
-                <button onclick="location.reload()" style="background: #eb3349; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
-                    Retry
+                <h2 style="color: #eb3349;">⚠️ Failed to Load</h2>
+                <p style="margin: 20px 0;">${error.message}</p>
+                <p style="font-size: 14px; opacity: 0.7;">Check console for details (F12)</p>
+                <button onclick="location.reload()" style="background: #eb3349; color: white; padding: 12px 30px; border: none; border-radius: 25px; cursor: pointer; font-size: 16px; margin-top: 20px;">
+                    🔄 Retry
                 </button>
             </div>
         `;
     }
 }
 
+// Make functions global
+window.plusSlides = plusSlides;
+window.showSlides = showSlides;
+
+// Start when ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializePage);
 } else {
