@@ -51,23 +51,130 @@ function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
 
-// Function to get m3u8 url of episode
-async function loadVideo(name, stream) {
-    try {
-        if (!name || !stream) {
-            throw new Error("Missing episode data");
-        }
+// Replace the loadVideo function in BeatAnimes/js/episode.js with this:
 
+async function loadVideo(name, episodeData) {
+    try {
         const epNameEl = document.getElementById("ep-name");
-        if (epNameEl) {
-            epNameEl.innerHTML = name;
-        }
+        if (epNameEl) epNameEl.innerHTML = name;
         
         const serversbtn = document.getElementById("serversbtn");
-        if (!serversbtn) {
-            throw new Error("Servers button container not found");
+        if (!serversbtn) throw new Error("Servers button container not found");
+
+        // Check if we have variants (Telegram API) or stream (GogoAnime API)
+        if (episodeData.variants && Array.isArray(episodeData.variants) && episodeData.variants.length > 0) {
+            // TELEGRAM API FORMAT
+            const languages = {};
+            for (const variant of episodeData.variants) {
+                if (!languages[variant.language]) {
+                    languages[variant.language] = [];
+                }
+                languages[variant.language].push(variant);
+            }
+
+            let html = '<div class="language-selector">';
+            Object.keys(languages).forEach((lang, index) => {
+                const active = index === 0 ? 'active' : '';
+                html += `<button class="lang-btn ${active}" data-lang="${lang}" onclick="switchLanguage('${lang}')">${lang}</button>`;
+            });
+            html += '</div>';
+
+            Object.entries(languages).forEach(([lang, variants], langIndex) => {
+                const display = langIndex === 0 ? 'block' : 'none';
+                html += `<div class="quality-selector quality-${lang}" style="display: ${display}">`;
+                
+                variants.forEach((variant, index) => {
+                    const active = index === 0 && langIndex === 0 ? 'sactive' : '';
+                    const channelUrl = `https://t.me/${variant.videoUrl}`;
+                    
+                    html += `<div class="sitem">
+                        <a class="sobtn ${active}" 
+                           onclick="selectTelegramServer(this)" 
+                           data-value="${channelUrl}?embed=1"
+                           data-direct="${channelUrl}">
+                           ${variant.quality} ${variant.language}
+                        </a>
+                    </div>`;
+                });
+                
+                html += '</div>';
+            });
+            
+            serversbtn.innerHTML = html;
+            
+            const firstBtn = document.querySelector('.sobtn.sactive');
+            if (firstBtn) firstBtn.click();
+
+        } else if (episodeData.stream && episodeData.stream.sources) {
+            // GOGOANIME API FORMAT (fallback)
+            let url = episodeData.stream.sources[0].file;
+            serversbtn.innerHTML = `<div class="sitem">
+                <a class="sobtn sactive" onclick="selectServer(this)" 
+                   data-value="./embed.html?url=${encodeURIComponent(url)}&episode_id=${EpisodeID}">
+                   AD Free 1
+                </a>
+            </div>`;
+            
+            const activeBtn = document.getElementsByClassName("sactive")[0];
+            if (activeBtn) activeBtn.click();
+        } else {
+            throw new Error("No video sources available");
         }
 
+        return true;
+    } catch (err) {
+        console.error("loadVideo error:", err);
+        return false;
+    }
+}
+
+// Add language switcher (for Telegram API)
+window.switchLanguage = function(language) {
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.lang === language) {
+            btn.classList.add('active');
+        }
+    });
+    
+    document.querySelectorAll('.quality-selector').forEach(selector => {
+        selector.style.display = 'none';
+    });
+    const targetSelector = document.querySelector(`.quality-${language}`);
+    if (targetSelector) {
+        targetSelector.style.display = 'block';
+    }
+    
+    const firstBtn = document.querySelector(`.quality-${language} .sobtn`);
+    if (firstBtn) {
+        document.querySelectorAll('.sobtn').forEach(btn => btn.classList.remove('sactive'));
+        firstBtn.classList.add('sactive');
+        firstBtn.click();
+    }
+}
+
+// Add Telegram server selector
+window.selectTelegramServer = function(btn) {
+    if (!btn) return;
+    
+    const buttons = document.getElementsByClassName("sobtn");
+    const iframe = document.getElementById("BeatAnimesFrame");
+    
+    if (!iframe) {
+        console.error("Video iframe not found");
+        return;
+    }
+
+    const videoUrl = btn.getAttribute("data-value");
+    if (videoUrl) {
+        iframe.src = videoUrl;
+    }
+    
+    for (let i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove("sactive");
+    }
+    btn.classList.add("sactive");
+}
         // Check if stream has sources
         if (!stream.sources || !Array.isArray(stream.sources) || stream.sources.length === 0) {
             throw new Error("No streaming sources available");
@@ -547,3 +654,4 @@ async function loadData() {
 }
 
 loadData();
+
