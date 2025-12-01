@@ -1,7 +1,6 @@
 // Api urls
 const animeapi = "/anime/";
 const episodeapi = "/episode/";
-const dlapi = "/download/";
 
 // Api Server Manager
 const AvailableServers = ["https://beatanimesapi.onrender.com"];
@@ -15,6 +14,8 @@ async function getJson(path, errCount = 0) {
     const ApiServer = getApiServer();
     let url = ApiServer + path;
 
+    console.log(`🌐 Fetching: ${url} (attempt ${errCount + 1})`);
+
     if (errCount > 2) {
         throw new Error(`Too many errors while fetching ${url}`);
     }
@@ -27,29 +28,41 @@ async function getJson(path, errCount = 0) {
             cache: 'no-cache'
         });
         
+        console.log(`📡 Response status: ${response.status}`);
+        
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
         
-        return await response.json();
+        const data = await response.json();
+        console.log(`✅ Data received:`, data);
+        return data;
     } catch (errors) {
-        console.error(errors);
+        console.error(`❌ Fetch error:`, errors);
         return getJson(path, errCount + 1);
     }
 }
 
 // Load video player with Telegram support
 async function loadVideo(name, episodeData) {
+    console.log("🎬 loadVideo called with:", { name, episodeData });
+    
     try {
         const epNameEl = document.getElementById("ep-name");
-        if (epNameEl) epNameEl.innerHTML = name;
+        if (epNameEl) {
+            epNameEl.innerHTML = name;
+            console.log("✅ Set episode name");
+        }
         
         const serversbtn = document.getElementById("serversbtn");
-        if (!serversbtn) throw new Error("Servers button container not found");
+        if (!serversbtn) {
+            console.error("❌ serversbtn element not found!");
+            throw new Error("Servers button container not found");
+        }
 
         // Check if we have variants (Telegram API)
         if (episodeData.variants && Array.isArray(episodeData.variants) && episodeData.variants.length > 0) {
-            console.log("✅ Using Telegram variants");
+            console.log("✅ Using Telegram variants:", episodeData.variants);
             
             // Group by language
             const languages = {};
@@ -59,6 +72,8 @@ async function loadVideo(name, episodeData) {
                 }
                 languages[variant.language].push(variant);
             }
+
+            console.log("📊 Languages grouped:", languages);
 
             let html = '<div class="language-selector">';
             Object.keys(languages).forEach((lang, index) => {
@@ -89,38 +104,32 @@ async function loadVideo(name, episodeData) {
             });
             
             serversbtn.innerHTML = html;
+            console.log("✅ Server buttons created");
             
             const firstBtn = document.querySelector('.sobtn.sactive');
-            if (firstBtn) firstBtn.click();
+            console.log("🔘 First button:", firstBtn);
+            if (firstBtn) {
+                console.log("🖱️ Clicking first button");
+                firstBtn.click();
+            }
             
             return true;
 
-        } else if (episodeData.stream && episodeData.stream.sources) {
-            // GogoAnime format (fallback)
-            console.log("✅ Using GogoAnime stream");
-            let url = episodeData.stream.sources[0].file;
-            serversbtn.innerHTML = `<div class="sitem">
-                <a class="sobtn sactive" onclick="selectServer(this)" 
-                   data-value="./embed.html?url=${encodeURIComponent(url)}&episode_id=${EpisodeID}">
-                   AD Free 1
-                </a>
-            </div>`;
-            
-            const activeBtn = document.getElementsByClassName("sactive")[0];
-            if (activeBtn) activeBtn.click();
-            return true;
-            
         } else {
+            console.warn("⚠️ No Telegram variants, checking GogoAnime format");
+            console.log("Episode data structure:", episodeData);
             throw new Error("No video sources available");
         }
     } catch (err) {
-        console.error("loadVideo error:", err);
+        console.error("❌ loadVideo error:", err);
         return false;
     }
 }
 
 // Language switcher (for Telegram API)
 window.switchLanguage = function(language) {
+    console.log("🌍 Switching language to:", language);
+    
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.dataset.lang === language) {
@@ -146,115 +155,53 @@ window.switchLanguage = function(language) {
 
 // Telegram server selector
 window.selectTelegramServer = function(btn) {
-    if (!btn) return;
+    console.log("🖱️ selectTelegramServer called");
+    
+    if (!btn) {
+        console.error("❌ Button is null");
+        return;
+    }
     
     const buttons = document.getElementsByClassName("sobtn");
     const iframe = document.getElementById("BeatAnimesFrame");
     
+    console.log("📺 Iframe element:", iframe);
+    
     if (!iframe) {
-        console.error("Video iframe not found");
+        console.error("❌ Video iframe not found");
         return;
     }
 
     const videoUrl = btn.getAttribute("data-value");
+    console.log("🎥 Video URL:", videoUrl);
+    
     if (videoUrl) {
         iframe.src = videoUrl;
+        console.log("✅ Iframe src set to:", videoUrl);
     }
     
     for (let i = 0; i < buttons.length; i++) {
         buttons[i].classList.remove("sactive");
     }
     btn.classList.add("sactive");
-}
-
-// Function to select server (GogoAnime)
-function selectServer(btn, sandbox = false) {
-    if (!btn) return;
     
-    const buttons = document.getElementsByClassName("sobtn");
-    const iframe = document.getElementById("BeatAnimesFrame");
-    
-    if (!iframe) {
-        console.error("Video iframe not found");
-        return;
-    }
-
-    if (sandbox === true) {
-        iframe.sandbox = "allow-forms allow-pointer-lock allow-same-origin allow-scripts allow-top-navigation";
-    } else {
-        iframe.removeAttribute("sandbox");
-    }
-
-    const videoUrl = btn.getAttribute("data-value");
-    if (videoUrl) {
-        iframe.src = videoUrl;
-    }
-    
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].className = "sobtn";
-    }
-    btn.className = "sobtn sactive";
-}
-
-// Function to show download links
-function showDownload() {
-    const showDlBtn = document.getElementById("showdl");
-    const dlDiv = document.getElementById("dldiv");
-    
-    if (showDlBtn) showDlBtn.style.display = "none";
-    if (dlDiv) dlDiv.classList.toggle("show");
-
-    // For Telegram, show direct link
-    getDownloadLinks(EpisodeID);
-}
-
-// Function to get download links
-async function getDownloadLinks(episodeId) {
-    const dlLinks = document.getElementById("dllinks");
-    if (!dlLinks) return;
-
-    try {
-        const data = await getJson(episodeapi + episodeId);
-        
-        if (!data || !data.results) {
-            throw new Error("No episode data");
-        }
-
-        const episodeData = data.results;
-
-        // If Telegram variants, show direct links
-        if (episodeData.variants && Array.isArray(episodeData.variants)) {
-            let html = "";
-            
-            for (const variant of episodeData.variants) {
-                const channelUrl = `https://t.me/${variant.videoUrl}`;
-                html += `<div class="sitem">
-                    <a class="sobtn download" target="_blank" href="${channelUrl}">
-                        <i class="fa fa-download"></i>${variant.quality} ${variant.language}
-                    </a>
-                </div>`;
-            }
-            
-            dlLinks.innerHTML = html;
-        } else {
-            dlLinks.innerHTML = '<p style="color: white; padding: 10px;">Download links not available</p>';
-        }
-    } catch (err) {
-        console.error("Download links error:", err);
-        dlLinks.innerHTML = '<p style="color: red; padding: 10px;">Failed to load download links</p>';
-    }
+    console.log("✅ Server selected");
 }
 
 // Function to get episode list
 let Episode_List = [];
 
 async function getEpUpperList(eplist) {
+    console.log("📋 getEpUpperList called with:", eplist);
+    
     if (!eplist || !Array.isArray(eplist) || eplist.length === 0) {
-        console.warn("No episodes available");
+        console.warn("⚠️ No episodes available");
         return;
     }
 
     const current_ep = Number(EpisodeID.split("-episode-")[1]);
+    console.log("🎯 Current episode:", current_ep);
+    
     Episode_List = eplist;
     const TotalEp = eplist.length;
     let html = "";
@@ -301,6 +248,8 @@ async function getEpUpperList(eplist) {
 }
 
 async function getEpLowerList(start, end) {
+    console.log(`📋 Loading episodes ${start} to ${end}`);
+    
     const current_ep = Number(EpisodeID.split("-episode-")[1]);
 
     let html = "";
@@ -346,8 +295,10 @@ function isShortNumber(n) {
 
 // Function to get episode Slider
 async function getEpSlider(total) {
+    console.log("🎞️ getEpSlider called with:", total);
+    
     if (!total || !Array.isArray(total) || total.length === 0) {
-        console.warn("No episodes for slider");
+        console.warn("⚠️ No episodes for slider");
         return;
     }
 
@@ -379,20 +330,23 @@ async function getEpSlider(total) {
     const epSlider = document.getElementById("ep-slider");
     if (epSlider) {
         epSlider.innerHTML = ephtml;
+        console.log("✅ Episode slider HTML set");
     }
     
     const sliderMain = document.getElementById("slider-main");
     if (sliderMain) {
         sliderMain.style.display = "block";
+        console.log("✅ Slider visible");
     }
     
     RefreshLazyLoader();
 
-    // Scroll to playing episode
+    // Scroll to playing episode and show page
     setTimeout(() => {
         const mainSection = document.getElementById("main-section");
         if (mainSection) {
             mainSection.style.display = "block";
+            console.log("✅ Main section visible");
         }
         
         const playingSlide = document.getElementsByClassName("ep-slider-playing")[0];
@@ -410,10 +364,12 @@ async function getEpSlider(total) {
         setTimeout(() => {
             if (mainSection) {
                 mainSection.style.opacity = 1;
+                console.log("✅ Main section opacity 1");
             }
             const loadEl = document.getElementById("load");
             if (loadEl) {
                 loadEl.style.display = "none";
+                console.log("✅ Loading hidden");
             }
         }, 100);
     }, 500);
@@ -480,11 +436,16 @@ const urlParams = new URLSearchParams(queryString);
 const AnimeID = urlParams.get("anime_id");
 const EpisodeID = urlParams.get("episode_id");
 
+console.log("🔍 URL Parameters:", { AnimeID, EpisodeID });
+
 if (!AnimeID || !EpisodeID) {
+    console.error("❌ Missing AnimeID or EpisodeID, redirecting to home");
     window.location = "./index.html";
 }
 
 async function loadEpisodeData(data) {
+    console.log("📦 loadEpisodeData called with:", data);
+    
     if (!data || !data.results) {
         throw new Error("Invalid episode data");
     }
@@ -492,34 +453,43 @@ async function loadEpisodeData(data) {
     data = data.results;
     const name = data.name || "Unknown Episode";
 
+    console.log("📝 Replacing title with:", name);
     document.documentElement.innerHTML = 
         document.documentElement.innerHTML.replaceAll("{{ title }}", name);
 
+    console.log("🎬 Calling loadVideo...");
     const videoLoaded = await loadVideo(name, data);
+    
     if (!videoLoaded) {
         throw new Error("Failed to load video");
     }
     
-    console.log("✅ Video loaded");
+    console.log("✅ Video loaded successfully");
 }
 
 async function loadData() {
+    console.log("🚀 Starting loadData()");
+    
     try {
         console.log(`🔍 Loading episode: ${EpisodeID}`);
         
         const episodeData = await getJson(episodeapi + EpisodeID);
-        console.log("📦 Episode data:", episodeData);
+        console.log("📦 Episode data received:", episodeData);
         
         await loadEpisodeData(episodeData);
+        console.log("✅ Episode data loaded");
 
+        console.log(`🔍 Loading anime: ${AnimeID}`);
         const animeData = await getJson(animeapi + encodeURIComponent(AnimeID));
-        console.log("📦 Anime data:", animeData);
+        console.log("📦 Anime data received:", animeData);
         
         if (!animeData || !animeData.results || !animeData.results.episodes) {
             throw new Error("Failed to load episode list");
         }
 
         const eplist = animeData.results.episodes;
+        console.log("📋 Episode list:", eplist);
+        
         await getEpUpperList(eplist);
         console.log("✅ Episode list loaded");
 
@@ -527,7 +497,7 @@ async function loadData() {
             await getEpSlider(eplist);
             console.log("✅ Episode Slider loaded");
         } catch (err) {
-            console.error("Slider failed:", err);
+            console.error("⚠️ Slider failed:", err);
             const mainSection = document.getElementById("main-section");
             if (mainSection) {
                 mainSection.style.display = "block";
@@ -540,6 +510,7 @@ async function loadData() {
         }
     } catch (err) {
         console.error("❌ Load data error:", err);
+        console.error("Error stack:", err.stack);
         
         const mainSection = document.getElementById("main-section");
         const errorPage = document.getElementById("error-page");
@@ -548,6 +519,9 @@ async function loadData() {
         if (mainSection) mainSection.style.display = "none";
         if (errorPage) errorPage.style.display = "block";
         if (errorDesc) errorDesc.innerHTML = err.message || "Unknown error occurred";
+        
+        const loadEl = document.getElementById("load");
+        if (loadEl) loadEl.style.display = "none";
     }
     
     const iframe = document.getElementById("BeatAnimesFrame");
@@ -557,9 +531,11 @@ async function loadData() {
 }
 
 // Make functions global
-window.selectServer = selectServer;
-window.showDownload = showDownload;
+window.selectTelegramServer = selectTelegramServer;
+window.switchLanguage = switchLanguage;
 window.plusSlides = plusSlides;
 window.episodeSelectChange = episodeSelectChange;
+window.retryImageLoad = retryImageLoad;
 
+console.log("📜 episode.js loaded, calling loadData()...");
 loadData();
