@@ -85,21 +85,22 @@ async function loadVideo(name, episodeData) {
             Object.entries(languages).forEach(([lang, variants], langIndex) => {
                 const display = langIndex === 0 ? 'block' : 'none';
                 html += `<div class="quality-selector quality-${lang}" style="display: ${display}">`;
-                
+
                 variants.forEach((variant, index) => {
                     const active = index === 0 && langIndex === 0 ? 'sactive' : '';
-                    
-                    // ✅ NEW: Use channelName and messageId from API
+                    const videoUrl = variant.videoUrl || variant.url || variant.directUrl || '';
+
                     html += `<div class="sitem">
-                        <a class="sobtn ${active}" 
-                           onclick="selectTelegramServer(this)" 
+                        <a class="sobtn ${active}"
+                           onclick="selectTelegramServer(this)"
                            data-channel="${variant.channelName}"
-                           data-msgid="${variant.messageId}">
+                           data-msgid="${variant.messageId}"
+                           data-video-url="${videoUrl}">
                            ${variant.quality} ${variant.language}
                         </a>
                     </div>`;
                 });
-                
+
                 html += '</div>';
             });
             
@@ -118,18 +119,17 @@ async function loadVideo(name, episodeData) {
     }
 }
 
-// ✅ UPDATED: Telegram server selector - Opens in Telegram app/web
-window.selectTelegramServer = function(btn) {
+window.selectTelegramServer = async function(btn) {
     console.log("🖱️ selectTelegramServer called");
-    
+
     if (!btn) {
         console.error("❌ Button is null");
         return;
     }
-    
+
     const buttons = document.getElementsByClassName("sobtn");
     const videoContainer = document.getElementById("video");
-    
+
     if (!videoContainer) {
         console.error("❌ Video container not found - DOM not ready!");
         setTimeout(() => {
@@ -138,25 +138,87 @@ window.selectTelegramServer = function(btn) {
         }, 500);
         return;
     }
-    
+
+    const videoUrl = btn.getAttribute("data-video-url");
     const channelName = btn.getAttribute("data-channel");
     const messageId = btn.getAttribute("data-msgid");
     const quality = btn.textContent.trim();
-    
-    console.log("🎥 Video info:", { channelName, messageId, quality });
-    
-    if (!channelName || !messageId) {
-        console.error("❌ Missing video information");
-        alert("Video information not found. Please try another quality.");
+
+    console.log("🎥 Video info:", { videoUrl, channelName, messageId, quality });
+
+    for (let i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove("sactive");
+    }
+    btn.classList.add("sactive");
+
+    if (videoUrl && videoUrl !== "null" && videoUrl !== "undefined") {
+        console.log("✅ Playing direct video URL");
+
+        videoContainer.innerHTML = `
+            <iframe
+                id="BeatAnimesFrame"
+                src="./embed.html?url=${encodeURIComponent(videoUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
+                style="border: 0px; width: 100%; height: 100%;"
+                scrolling="no"
+                frameborder="0"
+                allowfullscreen>
+            </iframe>
+        `;
+
+        console.log("✅ Video player loaded");
         return;
     }
-    
-    // Construct Telegram URL
+
+    if (!channelName || !messageId) {
+        console.error("❌ Missing video information");
+        videoContainer.innerHTML = `
+            <div style="padding: 40px; text-align: center; color: white;">
+                <h3>Video Not Available</h3>
+                <p>Video information not found. Please try another quality.</p>
+            </div>
+        `;
+        return;
+    }
+
+    console.log("⚠️ No direct URL, trying to fetch from API...");
+
+    videoContainer.innerHTML = `
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white;">
+            <i class="fa fa-spinner fa-spin" style="font-size: 40px;"></i>
+            <p style="margin-left: 20px;">Loading video...</p>
+        </div>
+    `;
+
+    try {
+        const ApiServer = getApiServer();
+        const streamUrl = `${ApiServer}/stream/${channelName}/${messageId}`;
+
+        const response = await fetch(streamUrl);
+        const data = await response.json();
+
+        if (data.videoUrl || data.url || data.streamUrl) {
+            const directUrl = data.videoUrl || data.url || data.streamUrl;
+            console.log("✅ Got direct URL from API:", directUrl);
+
+            videoContainer.innerHTML = `
+                <iframe
+                    id="BeatAnimesFrame"
+                    src="./embed.html?url=${encodeURIComponent(directUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
+                    style="border: 0px; width: 100%; height: 100%;"
+                    scrolling="no"
+                    frameborder="0"
+                    allowfullscreen>
+                </iframe>
+            `;
+            return;
+        }
+    } catch (error) {
+        console.warn("⚠️ Could not fetch direct URL:", error);
+    }
+
     const telegramUrl = `https://t.me/${channelName}/${messageId}`;
-    
-    console.log("✅ Telegram link:", telegramUrl);
-    
-    // Create a nice button to open Telegram
+    console.log("⚠️ Falling back to Telegram redirect");
+
     videoContainer.innerHTML = `
         <div style="
             display: flex;
@@ -179,12 +241,9 @@ window.selectTelegramServer = function(btn) {
                 margin-bottom: 25px;
                 box-shadow: 0 8px 20px rgba(235, 51, 73, 0.4);
             ">
-                <i class="fa fa-telegram" style="
-                    font-size: 40px;
-                    color: white;
-                "></i>
+                <i class="fa fa-telegram" style="font-size: 40px; color: white;"></i>
             </div>
-            
+
             <h3 style="
                 color: white;
                 font-family: 'Montserrat', sans-serif;
@@ -192,7 +251,7 @@ window.selectTelegramServer = function(btn) {
                 margin-bottom: 15px;
                 text-align: center;
             ">Watch on Telegram</h3>
-            
+
             <p style="
                 color: #999;
                 font-family: 'Montserrat', sans-serif;
@@ -201,7 +260,7 @@ window.selectTelegramServer = function(btn) {
                 text-align: center;
                 max-width: 400px;
             ">Quality: <strong style="color: #eb3349;">${quality}</strong></p>
-            
+
             <a href="${telegramUrl}" target="_blank" style="
                 background: linear-gradient(to right, #eb3349, #f45c43);
                 color: white;
@@ -220,24 +279,18 @@ window.selectTelegramServer = function(btn) {
                 <i class="fa fa-play-circle"></i>
                 Open in Telegram
             </a>
-            
+
             <p style="
                 color: #666;
                 font-family: 'Montserrat', sans-serif;
                 font-size: 12px;
                 margin-top: 20px;
                 text-align: center;
-            ">Video will open in Telegram app or web viewer</p>
+            ">Direct streaming not available. Video will open in Telegram.</p>
         </div>
     `;
-    
-    // Update active button
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].classList.remove("sactive");
-    }
-    btn.classList.add("sactive");
-    
-    console.log("✅ Telegram link created successfully");
+
+    console.log("✅ Telegram fallback displayed");
 }
 
 // Language switcher
