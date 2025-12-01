@@ -88,13 +88,14 @@ async function loadVideo(name, episodeData) {
                 
                 variants.forEach((variant, index) => {
                     const active = index === 0 && langIndex === 0 ? 'sactive' : '';
+                    // Construct proper Telegram URL
                     const channelUrl = `https://t.me/${variant.videoUrl}`;
                     
                     html += `<div class="sitem">
                         <a class="sobtn ${active}" 
                            onclick="selectTelegramServer(this)" 
-                           data-value="${channelUrl}?embed=1"
-                           data-direct="${channelUrl}">
+                           data-channel="${channelUrl}"
+                           data-msgid="${variant.messageId}">
                            ${variant.quality} ${variant.language}
                         </a>
                     </div>`;
@@ -106,27 +107,73 @@ async function loadVideo(name, episodeData) {
             serversbtn.innerHTML = html;
             console.log("✅ Server buttons created");
             
-            const firstBtn = document.querySelector('.sobtn.sactive');
-            console.log("🔘 First button:", firstBtn);
-            if (firstBtn) {
-                console.log("🖱️ Clicking first button");
-                firstBtn.click();
-            }
+            // Auto-select first server after a short delay
+            setTimeout(() => {
+                const firstBtn = document.querySelector('.sobtn.sactive');
+                console.log("🔘 First button:", firstBtn);
+                if (firstBtn) {
+                    console.log("🖱️ Auto-clicking first button");
+                    selectTelegramServer(firstBtn);
+                }
+            }, 300);
             
             return true;
 
         } else {
-            console.warn("⚠️ No Telegram variants, checking GogoAnime format");
-            console.log("Episode data structure:", episodeData);
+            console.warn("⚠️ No Telegram variants found");
             throw new Error("No video sources available");
         }
     } catch (err) {
         console.error("❌ loadVideo error:", err);
+        alert("Failed to load video: " + err.message);
         return false;
     }
 }
 
-// Language switcher (for Telegram API)
+// Telegram server selector
+window.selectTelegramServer = function(btn) {
+    console.log("🖱️ selectTelegramServer called");
+    
+    if (!btn) {
+        console.error("❌ Button is null");
+        return;
+    }
+    
+    const buttons = document.getElementsByClassName("sobtn");
+    const iframe = document.getElementById("BeatAnimesFrame");
+    
+    console.log("📺 Iframe element:", iframe);
+    
+    if (!iframe) {
+        console.error("❌ Video iframe not found");
+        alert("Video player not found! Please refresh the page.");
+        return;
+    }
+
+    const channelUrl = btn.getAttribute("data-channel");
+    console.log("🎥 Channel URL:", channelUrl);
+    
+    if (channelUrl) {
+        // Create proper Telegram embed URL
+        const embedUrl = channelUrl + "?embed=1&mode=tme";
+        console.log("✅ Setting iframe src to:", embedUrl);
+        iframe.src = embedUrl;
+    } else {
+        console.error("❌ No channel URL found on button");
+        alert("Video URL not found. Please try another quality.");
+        return;
+    }
+    
+    // Update active button
+    for (let i = 0; i < buttons.length; i++) {
+        buttons[i].classList.remove("sactive");
+    }
+    btn.classList.add("sactive");
+    
+    console.log("✅ Server selected successfully");
+}
+
+// Language switcher
 window.switchLanguage = function(language) {
     console.log("🌍 Switching language to:", language);
     
@@ -149,46 +196,11 @@ window.switchLanguage = function(language) {
     if (firstBtn) {
         document.querySelectorAll('.sobtn').forEach(btn => btn.classList.remove('sactive'));
         firstBtn.classList.add('sactive');
-        firstBtn.click();
+        selectTelegramServer(firstBtn);
     }
 }
 
-// Telegram server selector
-window.selectTelegramServer = function(btn) {
-    console.log("🖱️ selectTelegramServer called");
-    
-    if (!btn) {
-        console.error("❌ Button is null");
-        return;
-    }
-    
-    const buttons = document.getElementsByClassName("sobtn");
-    const iframe = document.getElementById("BeatAnimesFrame");
-    
-    console.log("📺 Iframe element:", iframe);
-    
-    if (!iframe) {
-        console.error("❌ Video iframe not found");
-        return;
-    }
-
-    const videoUrl = btn.getAttribute("data-value");
-    console.log("🎥 Video URL:", videoUrl);
-    
-    if (videoUrl) {
-        iframe.src = videoUrl;
-        console.log("✅ Iframe src set to:", videoUrl);
-    }
-    
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].classList.remove("sactive");
-    }
-    btn.classList.add("sactive");
-    
-    console.log("✅ Server selected");
-}
-
-// Function to get episode list
+// Episode list functions
 let Episode_List = [];
 
 async function getEpUpperList(eplist) {
@@ -288,12 +300,7 @@ async function episodeSelectChange(elem) {
     }
 }
 
-function isShortNumber(n) {
-    let x = Number(String(n).replace(".", ""));
-    return x < 20;
-}
-
-// Function to get episode Slider
+// Episode Slider
 async function getEpSlider(total) {
     console.log("🎞️ getEpSlider called with:", total);
     
@@ -311,18 +318,44 @@ async function getEpSlider(total) {
         const epNum = total[i][0];
         const isPlaying = episodeId === EpisodeID;
         const epClass = isPlaying ? "ep-slide ep-slider-playing" : "ep-slide";
-        const epLabel = isShortNumber(epNum) ? `Episode ${epNum}` : `Ep ${epNum}`;
-        const playingText = isPlaying ? " - Playing" : "";
-
-        ephtml += `<div class="${epClass}">
-            <a href="./episode.html?anime_id=${AnimeID}&episode_id=${episodeId}">
-                <img onerror="retryImageLoad(this)" class="lzy_img" 
-                     src="./static/loading1.gif" 
-                     data-src="https://thumb.techzbots1.workers.dev/thumb/${episodeId}"
-                     alt="${epLabel}">
-                <div class="ep-title">
-                    <span>${epLabel}${playingText}</span>
-                </div>
+        
+        // Simple episode button without thumbnail
+        ephtml += `<div class="${epClass}" style="
+            background: linear-gradient(135deg, #35373d 0%, #2a2b2f 100%);
+            border: 2px solid ${isPlaying ? '#ed3832' : '#ffffff'};
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            min-width: 120px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            margin: 0 10px;
+            transition: all 0.3s;
+        ">
+            <a href="./episode.html?anime_id=${AnimeID}&episode_id=${episodeId}" style="
+                text-decoration: none;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            ">
+                <div style="
+                    color: ${isPlaying ? '#ed3832' : '#ffffff'};
+                    font-family: 'Montserrat', sans-serif;
+                    font-size: 20px;
+                    font-weight: 700;
+                    margin-bottom: 5px;
+                ">EP ${epNum}</div>
+                ${isPlaying ? `<div style="
+                    color: #ed3832;
+                    font-size: 12px;
+                    font-weight: 600;
+                ">▶ PLAYING</div>` : ''}
             </a>
         </div>`;
     }
@@ -338,10 +371,8 @@ async function getEpSlider(total) {
         sliderMain.style.display = "block";
         console.log("✅ Slider visible");
     }
-    
-    RefreshLazyLoader();
 
-    // Scroll to playing episode and show page
+    // Show page and scroll to current episode
     setTimeout(() => {
         const mainSection = document.getElementById("main-section");
         if (mainSection) {
@@ -375,26 +406,7 @@ async function getEpSlider(total) {
     }, 500);
 }
 
-// Retry image load
-function retryImageLoad(img) {
-    if (!img) return;
-    
-    const ImageUrl = img.src;
-    img.src = "./static/loading1.gif";
-
-    setTimeout(() => {
-        if (ImageUrl.includes("?t=")) {
-            const t = Number(ImageUrl.split("?t=")[1]) + 1;
-            if (t < 5) {
-                img.src = ImageUrl.split("?t=")[0] + "?t=" + String(t);
-            }
-        } else {
-            img.src = ImageUrl + "?t=1";
-        }
-    }, 3000);
-}
-
-// Function to scroll episode slider
+// Scroll episode slider
 const windowWidth = window.innerWidth;
 
 function plusSlides(n) {
@@ -430,7 +442,7 @@ async function RefreshLazyLoader() {
     });
 }
 
-// Running functions
+// Get URL parameters
 const queryString = window.location.search;
 const urlParams = new URLSearchParams(queryString);
 const AnimeID = urlParams.get("anime_id");
@@ -535,7 +547,6 @@ window.selectTelegramServer = selectTelegramServer;
 window.switchLanguage = switchLanguage;
 window.plusSlides = plusSlides;
 window.episodeSelectChange = episodeSelectChange;
-window.retryImageLoad = retryImageLoad;
 
 console.log("📜 episode.js loaded, calling loadData()...");
 loadData();
