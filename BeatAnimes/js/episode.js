@@ -107,16 +107,7 @@ async function loadVideo(name, episodeData) {
             serversbtn.innerHTML = html;
             console.log("✅ Server buttons created");
             
-            // Auto-select first server after a short delay
-            setTimeout(() => {
-                const firstBtn = document.querySelector('.sobtn.sactive');
-                console.log("🔘 First button:", firstBtn);
-                if (firstBtn) {
-                    console.log("🖱️ Auto-clicking first button");
-                    selectTelegramServer(firstBtn);
-                }
-            }, 300);
-            
+            // CRITICAL: Wait for page to fully load before clicking
             return true;
 
         } else {
@@ -125,12 +116,11 @@ async function loadVideo(name, episodeData) {
         }
     } catch (err) {
         console.error("❌ loadVideo error:", err);
-        alert("Failed to load video: " + err.message);
         return false;
     }
 }
 
-// Telegram server selector
+// Telegram server selector - MUST BE CALLED AFTER DOM IS READY
 window.selectTelegramServer = function(btn) {
     console.log("🖱️ selectTelegramServer called");
     
@@ -145,8 +135,12 @@ window.selectTelegramServer = function(btn) {
     console.log("📺 Iframe element:", iframe);
     
     if (!iframe) {
-        console.error("❌ Video iframe not found");
-        alert("Video player not found! Please refresh the page.");
+        console.error("❌ Video iframe not found - DOM not ready!");
+        // Retry after 500ms
+        setTimeout(() => {
+            console.log("🔄 Retrying selectTelegramServer...");
+            selectTelegramServer(btn);
+        }, 500);
         return;
     }
 
@@ -319,7 +313,6 @@ async function getEpSlider(total) {
         const isPlaying = episodeId === EpisodeID;
         const epClass = isPlaying ? "ep-slide ep-slider-playing" : "ep-slide";
         
-        // Simple episode button without thumbnail
         ephtml += `<div class="${epClass}" style="
             background: linear-gradient(135deg, #35373d 0%, #2a2b2f 100%);
             border: 2px solid ${isPlaying ? '#ed3832' : '#ffffff'};
@@ -372,7 +365,6 @@ async function getEpSlider(total) {
         console.log("✅ Slider visible");
     }
 
-    // Show page and scroll to current episode
     setTimeout(() => {
         const mainSection = document.getElementById("main-section");
         if (mainSection) {
@@ -477,6 +469,17 @@ async function loadEpisodeData(data) {
     }
     
     console.log("✅ Video loaded successfully");
+    
+    // CRITICAL FIX: Auto-select first server AFTER DOM is replaced
+    setTimeout(() => {
+        const firstBtn = document.querySelector('.sobtn.sactive');
+        if (firstBtn) {
+            console.log("🖱️ Auto-clicking first server button");
+            selectTelegramServer(firstBtn);
+        } else {
+            console.warn("⚠️ No active server button found");
+        }
+    }, 1000); // Wait 1 second for DOM to settle
 }
 
 async function loadData() {
