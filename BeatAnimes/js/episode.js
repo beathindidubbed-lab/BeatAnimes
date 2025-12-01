@@ -118,7 +118,7 @@ async function loadVideo(name, episodeData) {
     }
 }
 
-// ✅ UPDATED: Telegram server selector with proper video container handling
+// ✅ UPDATED: Telegram server selector - Opens in Telegram app/web
 window.selectTelegramServer = function(btn) {
     console.log("🖱️ selectTelegramServer called");
     
@@ -151,21 +151,84 @@ window.selectTelegramServer = function(btn) {
         return;
     }
     
-    // ✅ Construct proper Telegram embed URL
-    const telegramEmbedUrl = `https://t.me/${channelName}/${messageId}?embed=1&mode=tme`;
+    // Construct Telegram URL
+    const telegramUrl = `https://t.me/${channelName}/${messageId}`;
     
-    console.log("✅ Loading Telegram video:", telegramEmbedUrl);
+    console.log("✅ Telegram link:", telegramUrl);
     
-    // ✅ Replace iframe with Telegram embed
+    // Create a nice button to open Telegram
     videoContainer.innerHTML = `
-        <iframe 
-            id="BeatAnimesFrame"
-            src="${telegramEmbedUrl}"
-            style="border: 0; width: 100%; height: 100%;"
-            scrolling="no"
-            frameborder="0"
-            allowfullscreen>
-        </iframe>
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background: linear-gradient(135deg, #2a2b2f 0%, #1a1a2e 100%);
+            border-radius: 8px;
+            padding: 40px 20px;
+        ">
+            <div style="
+                background: linear-gradient(to right, #eb3349, #f45c43);
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-bottom: 25px;
+                box-shadow: 0 8px 20px rgba(235, 51, 73, 0.4);
+            ">
+                <i class="fa fa-telegram" style="
+                    font-size: 40px;
+                    color: white;
+                "></i>
+            </div>
+            
+            <h3 style="
+                color: white;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 22px;
+                margin-bottom: 15px;
+                text-align: center;
+            ">Watch on Telegram</h3>
+            
+            <p style="
+                color: #999;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 14px;
+                margin-bottom: 30px;
+                text-align: center;
+                max-width: 400px;
+            ">Quality: <strong style="color: #eb3349;">${quality}</strong></p>
+            
+            <a href="${telegramUrl}" target="_blank" style="
+                background: linear-gradient(to right, #eb3349, #f45c43);
+                color: white;
+                padding: 15px 40px;
+                border-radius: 50px;
+                text-decoration: none;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 16px;
+                font-weight: 600;
+                box-shadow: 0 4px 15px rgba(235, 51, 73, 0.3);
+                transition: all 0.3s;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+            " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <i class="fa fa-play-circle"></i>
+                Open in Telegram
+            </a>
+            
+            <p style="
+                color: #666;
+                font-family: 'Montserrat', sans-serif;
+                font-size: 12px;
+                margin-top: 20px;
+                text-align: center;
+            ">Video will open in Telegram app or web viewer</p>
+        </div>
     `;
     
     // Update active button
@@ -174,7 +237,7 @@ window.selectTelegramServer = function(btn) {
     }
     btn.classList.add("sactive");
     
-    console.log("✅ Telegram video loaded successfully");
+    console.log("✅ Telegram link created successfully");
 }
 
 // Language switcher
