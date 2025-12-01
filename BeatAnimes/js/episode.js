@@ -38,21 +38,7 @@ async function getJson(path, errCount = 0) {
     }
 }
 
-function sentenceCase(str) {
-    if (!str || str === null || str === "") return "";
-    str = str.toString();
-    return str.replace(/\w\S*/g, function (txt) {
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
-}
-
-function capitalizeFirstLetter(string) {
-    if (!string) return "";
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-// Replace the loadVideo function in BeatAnimes/js/episode.js with this:
-
+// Load video player with Telegram support
 async function loadVideo(name, episodeData) {
     try {
         const epNameEl = document.getElementById("ep-name");
@@ -61,9 +47,11 @@ async function loadVideo(name, episodeData) {
         const serversbtn = document.getElementById("serversbtn");
         if (!serversbtn) throw new Error("Servers button container not found");
 
-        // Check if we have variants (Telegram API) or stream (GogoAnime API)
+        // Check if we have variants (Telegram API)
         if (episodeData.variants && Array.isArray(episodeData.variants) && episodeData.variants.length > 0) {
-            // TELEGRAM API FORMAT
+            console.log("✅ Using Telegram variants");
+            
+            // Group by language
             const languages = {};
             for (const variant of episodeData.variants) {
                 if (!languages[variant.language]) {
@@ -104,9 +92,12 @@ async function loadVideo(name, episodeData) {
             
             const firstBtn = document.querySelector('.sobtn.sactive');
             if (firstBtn) firstBtn.click();
+            
+            return true;
 
         } else if (episodeData.stream && episodeData.stream.sources) {
-            // GOGOANIME API FORMAT (fallback)
+            // GogoAnime format (fallback)
+            console.log("✅ Using GogoAnime stream");
             let url = episodeData.stream.sources[0].file;
             serversbtn.innerHTML = `<div class="sitem">
                 <a class="sobtn sactive" onclick="selectServer(this)" 
@@ -117,18 +108,18 @@ async function loadVideo(name, episodeData) {
             
             const activeBtn = document.getElementsByClassName("sactive")[0];
             if (activeBtn) activeBtn.click();
+            return true;
+            
         } else {
             throw new Error("No video sources available");
         }
-
-        return true;
     } catch (err) {
         console.error("loadVideo error:", err);
         return false;
     }
 }
 
-// Add language switcher (for Telegram API)
+// Language switcher (for Telegram API)
 window.switchLanguage = function(language) {
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.classList.remove('active');
@@ -153,7 +144,7 @@ window.switchLanguage = function(language) {
     }
 }
 
-// Add Telegram server selector
+// Telegram server selector
 window.selectTelegramServer = function(btn) {
     if (!btn) return;
     
@@ -175,80 +166,8 @@ window.selectTelegramServer = function(btn) {
     }
     btn.classList.add("sactive");
 }
-        // Check if stream has sources
-        if (!stream.sources || !Array.isArray(stream.sources) || stream.sources.length === 0) {
-            throw new Error("No streaming sources available");
-        }
 
-        let url = stream.sources[0].file;
-        serversbtn.innerHTML += `<div class="sitem">
-            <a class="sobtn sactive" onclick="selectServer(this)" 
-               data-value="./embed.html?url=${encodeURIComponent(url)}&episode_id=${EpisodeID}">
-               AD Free 1
-            </a>
-        </div>`;
-        
-        const activeBtn = document.getElementsByClassName("sactive")[0];
-        if (activeBtn) {
-            activeBtn.click();
-        }
-
-        // Add backup source if available
-        if (stream.sources_bk && Array.isArray(stream.sources_bk) && stream.sources_bk.length > 0) {
-            let backupUrl = stream.sources_bk[0].file;
-            serversbtn.innerHTML += `<div class="sitem">
-                <a class="sobtn" onclick="selectServer(this)" 
-                   data-value="./embed.html?url=${encodeURIComponent(backupUrl)}&episode_id=${EpisodeID}">
-                   AD Free 2
-                </a>
-            </div>`;
-        }
-
-        return true;
-    } catch (err) {
-        console.error("loadVideo error:", err);
-        return false;
-    }
-}
-
-// Function to available servers
-async function loadServers(servers, success = true) {
-    if (!servers || typeof servers !== 'object') {
-        console.warn("No servers data available");
-        return;
-    }
-
-    const serversbtn = document.getElementById("serversbtn");
-    if (!serversbtn) return;
-
-    let html = "";
-
-    for (let [key, value] of Object.entries(servers)) {
-        if (key !== "vidcdn" && value) {
-            key = capitalizeFirstLetter(key);
-            if (key === "Streamwish") {
-                html += `<div class="sitem">
-                    <a class="sobtn" onclick="selectServer(this,true)" data-value="${value}">${key}</a>
-                </div>`;
-            } else {
-                html += `<div class="sitem">
-                    <a class="sobtn" onclick="selectServer(this)" data-value="${value}">${key}</a>
-                </div>`;
-            }
-        }
-    }
-    
-    serversbtn.innerHTML += html;
-
-    if (success === false) {
-        const firstBtn = document.getElementsByClassName("sobtn")[0];
-        if (firstBtn) {
-            firstBtn.click();
-        }
-    }
-}
-
-// Function to select server
+// Function to select server (GogoAnime)
 function selectServer(btn, sandbox = false) {
     if (!btn) return;
     
@@ -285,11 +204,45 @@ function showDownload() {
     if (showDlBtn) showDlBtn.style.display = "none";
     if (dlDiv) dlDiv.classList.toggle("show");
 
-    getDownloadLinks(EpisodeID).then(() => {
-        console.log("Download links loaded");
-    }).catch(err => {
-        console.error("Failed to load download links:", err);
-    });
+    // For Telegram, show direct link
+    getDownloadLinks(EpisodeID);
+}
+
+// Function to get download links
+async function getDownloadLinks(episodeId) {
+    const dlLinks = document.getElementById("dllinks");
+    if (!dlLinks) return;
+
+    try {
+        const data = await getJson(episodeapi + episodeId);
+        
+        if (!data || !data.results) {
+            throw new Error("No episode data");
+        }
+
+        const episodeData = data.results;
+
+        // If Telegram variants, show direct links
+        if (episodeData.variants && Array.isArray(episodeData.variants)) {
+            let html = "";
+            
+            for (const variant of episodeData.variants) {
+                const channelUrl = `https://t.me/${variant.videoUrl}`;
+                html += `<div class="sitem">
+                    <a class="sobtn download" target="_blank" href="${channelUrl}">
+                        <i class="fa fa-download"></i>${variant.quality} ${variant.language}
+                    </a>
+                </div>`;
+            }
+            
+            dlLinks.innerHTML = html;
+        } else {
+            dlLinks.innerHTML = '<p style="color: white; padding: 10px;">Download links not available</p>';
+        }
+    } catch (err) {
+        console.error("Download links error:", err);
+        dlLinks.innerHTML = '<p style="color: red; padding: 10px;">Failed to load download links</p>';
+    }
 }
 
 // Function to get episode list
@@ -301,7 +254,7 @@ async function getEpUpperList(eplist) {
         return;
     }
 
-    const current_ep = Number(EpisodeID.split("-episode-")[1].replace("-", "."));
+    const current_ep = Number(EpisodeID.split("-episode-")[1]);
     Episode_List = eplist;
     const TotalEp = eplist.length;
     let html = "";
@@ -309,7 +262,7 @@ async function getEpUpperList(eplist) {
     for (let i = 0; i < eplist.length; i++) {
         if (!eplist[i] || !eplist[i][0]) continue;
         
-        const epnum = Number(String(eplist[i][0]).replaceAll("-", "."));
+        const epnum = Number(String(eplist[i][0]));
 
         if ((epnum - 1) % 100 === 0) {
             let epUpperBtnText;
@@ -344,11 +297,11 @@ async function getEpUpperList(eplist) {
         }
     }
     
-    console.log("Episode list loaded");
+    console.log("✅ Episode list loaded");
 }
 
 async function getEpLowerList(start, end) {
-    const current_ep = Number(EpisodeID.split("-episode-")[1].replace("-", "."));
+    const current_ep = Number(EpisodeID.split("-episode-")[1]);
 
     let html = "";
     const eplist = Episode_List.slice(start - 1, end);
@@ -357,7 +310,7 @@ async function getEpLowerList(start, end) {
         if (!eplist[i] || eplist[i].length < 2) continue;
         
         const episode_id = eplist[i][1];
-        let epnum = Number(String(eplist[i][0]).replaceAll("-", "."));
+        let epnum = Number(String(eplist[i][0]));
 
         let epLowerBtnText = `${epnum}`;
 
@@ -383,47 +336,6 @@ async function episodeSelectChange(elem) {
             parseInt(option.getAttribute("data-from")),
             parseInt(option.getAttribute("data-to"))
         );
-    }
-}
-
-// Function to get download links
-async function getDownloadLinks(episodeId) {
-    if (!episodeId) {
-        console.error("No episode ID provided");
-        return;
-    }
-
-    try {
-        const data = await getJson(dlapi + episodeId);
-        
-        if (!data || !data.results) {
-            throw new Error("No download data received");
-        }
-
-        let html = "";
-        const results = data.results;
-
-        for (const [key, value] of Object.entries(results)) {
-            if (!value) continue;
-            
-            const quality = key.split("x")[1] || key;
-            html += `<div class="sitem">
-                <a class="sobtn download" target="_blank" href="${value}">
-                    <i class="fa fa-download"></i>${quality}p
-                </a>
-            </div>`;
-        }
-        
-        const dlLinks = document.getElementById("dllinks");
-        if (dlLinks) {
-            dlLinks.innerHTML = html || '<p style="color: white; padding: 10px;">No download links available</p>';
-        }
-    } catch (err) {
-        console.error("getDownloadLinks error:", err);
-        const dlLinks = document.getElementById("dllinks");
-        if (dlLinks) {
-            dlLinks.innerHTML = '<p style="color: red; padding: 10px;">Failed to load download links</p>';
-        }
     }
 }
 
@@ -579,38 +491,29 @@ async function loadEpisodeData(data) {
 
     data = data.results;
     const name = data.name || "Unknown Episode";
-    const stream = data.stream;
-    const servers = data.servers || {};
 
     document.documentElement.innerHTML = 
         document.documentElement.innerHTML.replaceAll("{{ title }}", name);
 
-    try {
-        if (!stream) {
-            throw new Error("No streaming data available");
-        }
-        
-        const videoLoaded = await loadVideo(name, stream);
-        if (videoLoaded) {
-            console.log("Video loaded");
-            await loadServers(servers, true);
-            console.log("Servers loaded");
-        } else {
-            throw new Error("Failed to load video");
-        }
-    } catch (err) {
-        console.warn("Primary video loading failed, trying alternate servers:", err);
-        await loadServers(servers, false);
-        console.log("Alternate servers loaded");
+    const videoLoaded = await loadVideo(name, data);
+    if (!videoLoaded) {
+        throw new Error("Failed to load video");
     }
+    
+    console.log("✅ Video loaded");
 }
 
 async function loadData() {
     try {
+        console.log(`🔍 Loading episode: ${EpisodeID}`);
+        
         const episodeData = await getJson(episodeapi + EpisodeID);
+        console.log("📦 Episode data:", episodeData);
+        
         await loadEpisodeData(episodeData);
 
         const animeData = await getJson(animeapi + encodeURIComponent(AnimeID));
+        console.log("📦 Anime data:", animeData);
         
         if (!animeData || !animeData.results || !animeData.results.episodes) {
             throw new Error("Failed to load episode list");
@@ -618,13 +521,13 @@ async function loadData() {
 
         const eplist = animeData.results.episodes;
         await getEpUpperList(eplist);
-        console.log("Episode list loaded");
+        console.log("✅ Episode list loaded");
 
         try {
             await getEpSlider(eplist);
-            console.log("Episode Slider loaded");
+            console.log("✅ Episode Slider loaded");
         } catch (err) {
-            console.error("Slider failed, showing page anyway:", err);
+            console.error("Slider failed:", err);
             const mainSection = document.getElementById("main-section");
             if (mainSection) {
                 mainSection.style.display = "block";
@@ -636,7 +539,7 @@ async function loadData() {
             }
         }
     } catch (err) {
-        console.error("Load data error:", err);
+        console.error("❌ Load data error:", err);
         
         const mainSection = document.getElementById("main-section");
         const errorPage = document.getElementById("error-page");
@@ -653,5 +556,10 @@ async function loadData() {
     }
 }
 
-loadData();
+// Make functions global
+window.selectServer = selectServer;
+window.showDownload = showDownload;
+window.plusSlides = plusSlides;
+window.episodeSelectChange = episodeSelectChange;
 
+loadData();
