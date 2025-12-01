@@ -88,13 +88,12 @@ async function loadVideo(name, episodeData) {
                 
                 variants.forEach((variant, index) => {
                     const active = index === 0 && langIndex === 0 ? 'sactive' : '';
-                    // Construct proper Telegram URL
-                    const channelUrl = `https://t.me/${variant.videoUrl}`;
                     
+                    // ✅ NEW: Use channelName and messageId from API
                     html += `<div class="sitem">
                         <a class="sobtn ${active}" 
                            onclick="selectTelegramServer(this)" 
-                           data-channel="${channelUrl}"
+                           data-channel="${variant.channelName}"
                            data-msgid="${variant.messageId}">
                            ${variant.quality} ${variant.language}
                         </a>
@@ -107,7 +106,6 @@ async function loadVideo(name, episodeData) {
             serversbtn.innerHTML = html;
             console.log("✅ Server buttons created");
             
-            // CRITICAL: Wait for page to fully load before clicking
             return true;
 
         } else {
@@ -120,7 +118,7 @@ async function loadVideo(name, episodeData) {
     }
 }
 
-// Telegram server selector - MUST BE CALLED AFTER DOM IS READY
+// ✅ UPDATED: Telegram server selector with proper video container handling
 window.selectTelegramServer = function(btn) {
     console.log("🖱️ selectTelegramServer called");
     
@@ -130,33 +128,45 @@ window.selectTelegramServer = function(btn) {
     }
     
     const buttons = document.getElementsByClassName("sobtn");
-    const iframe = document.getElementById("BeatAnimesFrame");
+    const videoContainer = document.getElementById("video");
     
-    console.log("📺 Iframe element:", iframe);
-    
-    if (!iframe) {
-        console.error("❌ Video iframe not found - DOM not ready!");
-        // Retry after 500ms
+    if (!videoContainer) {
+        console.error("❌ Video container not found - DOM not ready!");
         setTimeout(() => {
             console.log("🔄 Retrying selectTelegramServer...");
             selectTelegramServer(btn);
         }, 500);
         return;
     }
-
-    const channelUrl = btn.getAttribute("data-channel");
-    console.log("🎥 Channel URL:", channelUrl);
     
-    if (channelUrl) {
-        // Create proper Telegram embed URL
-        const embedUrl = channelUrl + "?embed=1&mode=tme";
-        console.log("✅ Setting iframe src to:", embedUrl);
-        iframe.src = embedUrl;
-    } else {
-        console.error("❌ No channel URL found on button");
-        alert("Video URL not found. Please try another quality.");
+    const channelName = btn.getAttribute("data-channel");
+    const messageId = btn.getAttribute("data-msgid");
+    const quality = btn.textContent.trim();
+    
+    console.log("🎥 Video info:", { channelName, messageId, quality });
+    
+    if (!channelName || !messageId) {
+        console.error("❌ Missing video information");
+        alert("Video information not found. Please try another quality.");
         return;
     }
+    
+    // ✅ Construct proper Telegram embed URL
+    const telegramEmbedUrl = `https://t.me/${channelName}/${messageId}?embed=1&mode=tme`;
+    
+    console.log("✅ Loading Telegram video:", telegramEmbedUrl);
+    
+    // ✅ Replace iframe with Telegram embed
+    videoContainer.innerHTML = `
+        <iframe 
+            id="BeatAnimesFrame"
+            src="${telegramEmbedUrl}"
+            style="border: 0; width: 100%; height: 100%;"
+            scrolling="no"
+            frameborder="0"
+            allowfullscreen>
+        </iframe>
+    `;
     
     // Update active button
     for (let i = 0; i < buttons.length; i++) {
@@ -164,7 +174,7 @@ window.selectTelegramServer = function(btn) {
     }
     btn.classList.add("sactive");
     
-    console.log("✅ Server selected successfully");
+    console.log("✅ Telegram video loaded successfully");
 }
 
 // Language switcher
@@ -470,7 +480,7 @@ async function loadEpisodeData(data) {
     
     console.log("✅ Video loaded successfully");
     
-    // CRITICAL FIX: Auto-select first server AFTER DOM is replaced
+    // ✅ CRITICAL FIX: Auto-select first server AFTER DOM is replaced
     setTimeout(() => {
         const firstBtn = document.querySelector('.sobtn.sactive');
         if (firstBtn) {
