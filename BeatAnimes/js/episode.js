@@ -43,7 +43,7 @@ async function getJson(path, errCount = 0) {
     }
 }
 
-// Load video player with Telegram support
+// Load video player with Telegram + Direct URL support
 async function loadVideo(name, episodeData) {
     console.log("🎬 loadVideo called with:", { name, episodeData });
     
@@ -88,13 +88,15 @@ async function loadVideo(name, episodeData) {
 
                 variants.forEach((variant, index) => {
                     const active = index === 0 && langIndex === 0 ? 'sactive' : '';
-                    const videoUrl = variant.videoUrl || variant.url || variant.directUrl || '';
+                    const directUrl = variant.directUrl || '';
+                    const videoUrl = variant.videoUrl || variant.url || '';
 
                     html += `<div class="sitem">
                         <a class="sobtn ${active}"
                            onclick="selectTelegramServer(this)"
-                           data-channel="${variant.channelName}"
-                           data-msgid="${variant.messageId}"
+                           data-channel="${variant.channelName || ''}"
+                           data-msgid="${variant.messageId || ''}"
+                           data-direct-url="${directUrl}"
                            data-video-url="${videoUrl}">
                            ${variant.quality} ${variant.language}
                         </a>
@@ -120,7 +122,7 @@ async function loadVideo(name, episodeData) {
 }
 
 // ============================================
-// FIXED: selectTelegramServer function
+// FIXED: selectTelegramServer with Direct URL Support
 // ============================================
 
 window.selectTelegramServer = async function(btn) {
@@ -142,9 +144,11 @@ window.selectTelegramServer = async function(btn) {
     // Get data from button
     const channelName = btn.getAttribute("data-channel");
     const messageId = btn.getAttribute("data-msgid");
+    const directUrl = btn.getAttribute("data-direct-url");  // ✅ Get direct URL
+    const videoUrl = btn.getAttribute("data-video-url");
     const quality = btn.textContent.trim();
 
-    console.log('🎥 Video info:', { channelName, messageId, quality });
+    console.log('🎥 Video info:', { channelName, messageId, directUrl, videoUrl, quality });
 
     // Mark button as active
     for (let i = 0; i < buttons.length; i++) {
@@ -161,41 +165,73 @@ window.selectTelegramServer = async function(btn) {
     `;
 
     try {
-        // ✅ FIX: Construct proper Telegram video URL
-        // Option 1: Try to get direct stream URL from API
-        const ApiServer = getApiServer();
-        const streamUrl = `${ApiServer}/stream/${channelName}/${messageId}`;
-        
-        console.log('🔄 Attempting to get stream URL:', streamUrl);
+        // ✅ Priority 1: If direct URL is available, use it immediately
+        if (directUrl && directUrl !== 'null' && directUrl !== 'undefined' && directUrl.startsWith('http')) {
+            console.log('✅ Using direct URL from caption:', directUrl);
 
-        try {
-            const response = await fetch(streamUrl, { timeout: 10000 });
-            const data = await response.json();
-
-            if (data.videoUrl || data.url || data.streamUrl) {
-                const directUrl = data.videoUrl || data.url || data.streamUrl;
-                console.log('✅ Got direct URL from API:', directUrl);
-
-                videoContainer.innerHTML = `
-                    <iframe
-                        id="BeatAnimesFrame"
-                        src="./embed.html?url=${encodeURIComponent(directUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
-                        style="border: 0px; width: 100%; height: 100%;"
-                        scrolling="no"
-                        frameborder="0"
-                        allowfullscreen>
-                    </iframe>
-                `;
-                return;
-            }
-        } catch (error) {
-            console.warn('⚠️ Could not fetch stream URL:', error.message);
+            videoContainer.innerHTML = `
+                <iframe
+                    id="BeatAnimesFrame"
+                    src="./embed.html?url=${encodeURIComponent(directUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
+                    style="border: 0px; width: 100%; height: 100%;"
+                    scrolling="no"
+                    frameborder="0"
+                    allowfullscreen>
+                </iframe>
+            `;
+            return;
         }
 
-        // ✅ Option 2: Use Telegram Bot API (if you have a bot token)
-        // This requires adding a /stream/:channel/:messageId endpoint to your server.js
-        
-        // ✅ Option 3: Fallback to Telegram web link
+        // ✅ Priority 2: Check if videoUrl is already a direct URL
+        if (videoUrl && videoUrl !== 'null' && videoUrl !== 'undefined' && videoUrl.startsWith('http')) {
+            console.log('✅ Using direct URL from videoUrl:', videoUrl);
+
+            videoContainer.innerHTML = `
+                <iframe
+                    id="BeatAnimesFrame"
+                    src="./embed.html?url=${encodeURIComponent(videoUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
+                    style="border: 0px; width: 100%; height: 100%;"
+                    scrolling="no"
+                    frameborder="0"
+                    allowfullscreen>
+                </iframe>
+            `;
+            return;
+        }
+
+        // ✅ Priority 3: Try to get stream URL from API
+        if (channelName && messageId) {
+            const ApiServer = getApiServer();
+            const streamUrl = `${ApiServer}/stream/${channelName}/${messageId}`;
+            
+            console.log('🔄 Attempting to get stream URL from API:', streamUrl);
+
+            try {
+                const response = await fetch(streamUrl, { timeout: 10000 });
+                const data = await response.json();
+
+                if (data.videoUrl || data.url || data.streamUrl) {
+                    const apiDirectUrl = data.videoUrl || data.url || data.streamUrl;
+                    console.log('✅ Got direct URL from API:', apiDirectUrl);
+
+                    videoContainer.innerHTML = `
+                        <iframe
+                            id="BeatAnimesFrame"
+                            src="./embed.html?url=${encodeURIComponent(apiDirectUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
+                            style="border: 0px; width: 100%; height: 100%;"
+                            scrolling="no"
+                            frameborder="0"
+                            allowfullscreen>
+                        </iframe>
+                    `;
+                    return;
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not fetch stream URL from API:', error.message);
+            }
+        }
+
+        // ✅ Priority 4: Fallback to Telegram web link
         const telegramUrl = `https://t.me/${channelName}/${messageId}`;
         console.log('⚠️ Falling back to Telegram redirect:', telegramUrl);
 
@@ -266,7 +302,7 @@ window.selectTelegramServer = async function(btn) {
                     font-size: 12px;
                     margin-top: 20px;
                     text-align: center;
-                ">Direct streaming coming soon. Video will open in Telegram app.</p>
+                ">Direct streaming not available. Video will open in Telegram app.</p>
             </div>
         `;
 
@@ -606,7 +642,7 @@ async function loadEpisodeData(data) {
         } else {
             console.warn("⚠️ No active server button found");
         }
-    }, 1000); // Wait 1 second for DOM to settle
+    }, 1000);
 }
 
 async function loadData() {
@@ -680,4 +716,3 @@ window.episodeSelectChange = episodeSelectChange;
 
 console.log("📜 episode.js loaded, calling loadData()...");
 loadData();
-
