@@ -119,11 +119,15 @@ async function loadVideo(name, episodeData) {
     }
 }
 
+// ============================================
+// FIXED: selectTelegramServer function
+// ============================================
+
 window.selectTelegramServer = async function(btn) {
-    console.log("🖱️ selectTelegramServer called");
+    console.log('🖱️ selectTelegramServer called');
 
     if (!btn) {
-        console.error("❌ Button is null");
+        console.error('❌ Button is null');
         return;
     }
 
@@ -131,167 +135,164 @@ window.selectTelegramServer = async function(btn) {
     const videoContainer = document.getElementById("video");
 
     if (!videoContainer) {
-        console.error("❌ Video container not found - DOM not ready!");
-        setTimeout(() => {
-            console.log("🔄 Retrying selectTelegramServer...");
-            selectTelegramServer(btn);
-        }, 500);
+        console.error('❌ Video container not found');
         return;
     }
 
-    const videoUrl = btn.getAttribute("data-video-url");
+    // Get data from button
     const channelName = btn.getAttribute("data-channel");
     const messageId = btn.getAttribute("data-msgid");
     const quality = btn.textContent.trim();
 
-    console.log("🎥 Video info:", { videoUrl, channelName, messageId, quality });
+    console.log('🎥 Video info:', { channelName, messageId, quality });
 
+    // Mark button as active
     for (let i = 0; i < buttons.length; i++) {
         buttons[i].classList.remove("sactive");
     }
     btn.classList.add("sactive");
 
-    if (videoUrl && videoUrl !== "null" && videoUrl !== "undefined") {
-        console.log("✅ Playing direct video URL");
-
-        videoContainer.innerHTML = `
-            <iframe
-                id="BeatAnimesFrame"
-                src="./embed.html?url=${encodeURIComponent(videoUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
-                style="border: 0px; width: 100%; height: 100%;"
-                scrolling="no"
-                frameborder="0"
-                allowfullscreen>
-            </iframe>
-        `;
-
-        console.log("✅ Video player loaded");
-        return;
-    }
-
-    if (!channelName || !messageId) {
-        console.error("❌ Missing video information");
-        videoContainer.innerHTML = `
-            <div style="padding: 40px; text-align: center; color: white;">
-                <h3>Video Not Available</h3>
-                <p>Video information not found. Please try another quality.</p>
-            </div>
-        `;
-        return;
-    }
-
-    console.log("⚠️ No direct URL, trying to fetch from API...");
-
+    // Show loading
     videoContainer.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white;">
+        <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white; flex-direction: column; gap: 20px;">
             <i class="fa fa-spinner fa-spin" style="font-size: 40px;"></i>
-            <p style="margin-left: 20px;">Loading video...</p>
+            <p>Loading video...</p>
         </div>
     `;
 
     try {
+        // ✅ FIX: Construct proper Telegram video URL
+        // Option 1: Try to get direct stream URL from API
         const ApiServer = getApiServer();
         const streamUrl = `${ApiServer}/stream/${channelName}/${messageId}`;
+        
+        console.log('🔄 Attempting to get stream URL:', streamUrl);
 
-        const response = await fetch(streamUrl);
-        const data = await response.json();
+        try {
+            const response = await fetch(streamUrl, { timeout: 10000 });
+            const data = await response.json();
 
-        if (data.videoUrl || data.url || data.streamUrl) {
-            const directUrl = data.videoUrl || data.url || data.streamUrl;
-            console.log("✅ Got direct URL from API:", directUrl);
+            if (data.videoUrl || data.url || data.streamUrl) {
+                const directUrl = data.videoUrl || data.url || data.streamUrl;
+                console.log('✅ Got direct URL from API:', directUrl);
 
-            videoContainer.innerHTML = `
-                <iframe
-                    id="BeatAnimesFrame"
-                    src="./embed.html?url=${encodeURIComponent(directUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
-                    style="border: 0px; width: 100%; height: 100%;"
-                    scrolling="no"
-                    frameborder="0"
-                    allowfullscreen>
-                </iframe>
-            `;
-            return;
+                videoContainer.innerHTML = `
+                    <iframe
+                        id="BeatAnimesFrame"
+                        src="./embed.html?url=${encodeURIComponent(directUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
+                        style="border: 0px; width: 100%; height: 100%;"
+                        scrolling="no"
+                        frameborder="0"
+                        allowfullscreen>
+                    </iframe>
+                `;
+                return;
+            }
+        } catch (error) {
+            console.warn('⚠️ Could not fetch stream URL:', error.message);
         }
-    } catch (error) {
-        console.warn("⚠️ Could not fetch direct URL:", error);
-    }
 
-    const telegramUrl = `https://t.me/${channelName}/${messageId}`;
-    console.log("⚠️ Falling back to Telegram redirect");
+        // ✅ Option 2: Use Telegram Bot API (if you have a bot token)
+        // This requires adding a /stream/:channel/:messageId endpoint to your server.js
+        
+        // ✅ Option 3: Fallback to Telegram web link
+        const telegramUrl = `https://t.me/${channelName}/${messageId}`;
+        console.log('⚠️ Falling back to Telegram redirect:', telegramUrl);
 
-    videoContainer.innerHTML = `
-        <div style="
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            background: linear-gradient(135deg, #2a2b2f 0%, #1a1a2e 100%);
-            border-radius: 8px;
-            padding: 40px 20px;
-        ">
+        videoContainer.innerHTML = `
             <div style="
-                background: linear-gradient(to right, #eb3349, #f45c43);
-                width: 80px;
-                height: 80px;
-                border-radius: 50%;
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                margin-bottom: 25px;
-                box-shadow: 0 8px 20px rgba(235, 51, 73, 0.4);
+                height: 100%;
+                background: linear-gradient(135deg, #2a2b2f 0%, #1a1a2e 100%);
+                border-radius: 8px;
+                padding: 40px 20px;
             ">
-                <i class="fa fa-telegram" style="font-size: 40px; color: white;"></i>
+                <div style="
+                    background: linear-gradient(to right, #eb3349, #f45c43);
+                    width: 80px;
+                    height: 80px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-bottom: 25px;
+                    box-shadow: 0 8px 20px rgba(235, 51, 73, 0.4);
+                ">
+                    <i class="fa fa-telegram" style="font-size: 40px; color: white;"></i>
+                </div>
+
+                <h3 style="
+                    color: white;
+                    font-family: 'Montserrat', sans-serif;
+                    font-size: 22px;
+                    margin-bottom: 15px;
+                    text-align: center;
+                ">Watch on Telegram</h3>
+
+                <p style="
+                    color: #999;
+                    font-family: 'Montserrat', sans-serif;
+                    font-size: 14px;
+                    margin-bottom: 30px;
+                    text-align: center;
+                    max-width: 400px;
+                ">Quality: <strong style="color: #eb3349;">${quality}</strong></p>
+
+                <a href="${telegramUrl}" target="_blank" style="
+                    background: linear-gradient(to right, #eb3349, #f45c43);
+                    color: white;
+                    padding: 15px 40px;
+                    border-radius: 50px;
+                    text-decoration: none;
+                    font-family: 'Montserrat', sans-serif;
+                    font-size: 16px;
+                    font-weight: 600;
+                    box-shadow: 0 4px 15px rgba(235, 51, 73, 0.3);
+                    transition: all 0.3s;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 10px;
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    <i class="fa fa-play-circle"></i>
+                    Open in Telegram
+                </a>
+
+                <p style="
+                    color: #666;
+                    font-family: 'Montserrat', sans-serif;
+                    font-size: 12px;
+                    margin-top: 20px;
+                    text-align: center;
+                ">Direct streaming coming soon. Video will open in Telegram app.</p>
             </div>
+        `;
 
-            <h3 style="
-                color: white;
-                font-family: 'Montserrat', sans-serif;
-                font-size: 22px;
-                margin-bottom: 15px;
-                text-align: center;
-            ">Watch on Telegram</h3>
-
-            <p style="
-                color: #999;
-                font-family: 'Montserrat', sans-serif;
-                font-size: 14px;
-                margin-bottom: 30px;
-                text-align: center;
-                max-width: 400px;
-            ">Quality: <strong style="color: #eb3349;">${quality}</strong></p>
-
-            <a href="${telegramUrl}" target="_blank" style="
-                background: linear-gradient(to right, #eb3349, #f45c43);
-                color: white;
-                padding: 15px 40px;
-                border-radius: 50px;
-                text-decoration: none;
-                font-family: 'Montserrat', sans-serif;
-                font-size: 16px;
-                font-weight: 600;
-                box-shadow: 0 4px 15px rgba(235, 51, 73, 0.3);
-                transition: all 0.3s;
-                display: inline-flex;
-                align-items: center;
-                gap: 10px;
-            " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-                <i class="fa fa-play-circle"></i>
-                Open in Telegram
-            </a>
-
-            <p style="
-                color: #666;
-                font-family: 'Montserrat', sans-serif;
-                font-size: 12px;
-                margin-top: 20px;
-                text-align: center;
-            ">Direct streaming not available. Video will open in Telegram.</p>
-        </div>
-    `;
-
-    console.log("✅ Telegram fallback displayed");
-}
+    } catch (error) {
+        console.error('❌ Error loading video:', error);
+        
+        videoContainer.innerHTML = `
+            <div style="padding: 40px; text-align: center; color: white;">
+                <h3 style="color: #eb3349; margin-bottom: 20px;">Failed to Load Video</h3>
+                <p>${error.message}</p>
+                <button onclick="location.reload()" style="
+                    background: #eb3349;
+                    color: white;
+                    padding: 12px 30px;
+                    border: none;
+                    border-radius: 25px;
+                    cursor: pointer;
+                    font-size: 16px;
+                    margin-top: 20px;
+                ">
+                    <i class="fa fa-refresh"></i> Retry
+                </button>
+            </div>
+        `;
+    }
+};
 
 // Language switcher
 window.switchLanguage = function(language) {
@@ -679,3 +680,4 @@ window.episodeSelectChange = episodeSelectChange;
 
 console.log("📜 episode.js loaded, calling loadData()...");
 loadData();
+
