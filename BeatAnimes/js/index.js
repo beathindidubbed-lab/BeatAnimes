@@ -30,7 +30,50 @@ async function getJson(path, errCount = 0) {
     }
 }
 
-// Banner section - uses GogoAnime popular data
+
+async function searchAnilistForBanner(animeName) {
+    const query = `
+        query ($search: String) {
+            Media(search: $search, type: ANIME) {
+                bannerImage
+                coverImage { 
+                    extraLarge 
+                    large 
+                }
+            }
+        }
+    `;
+
+    try {
+        const response = await fetch('https://graphql.anilist.co', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({
+                query: query,
+                variables: { search: animeName }
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.data && data.data.Media) {
+            return {
+                bannerImage: data.data.Media.bannerImage,
+                coverImage: data.data.Media.coverImage?.extraLarge || data.data.Media.coverImage?.large
+            };
+        }
+        
+        return null;
+    } catch (error) {
+        console.error(`Anilist banner fetch error:`, error.message);
+        return null;
+    }
+}
+
+
 async function getTrendingAnimes(popularData) {
     if (!popularData || popularData.length === 0) {
         console.warn("⚠️ No data for banner");
@@ -41,6 +84,7 @@ async function getTrendingAnimes(popularData) {
 
     let SLIDER_HTML = "";
     
+    // ✅ Fetch Anilist data for each anime to get banner images
     for (let pos = 0; pos < Math.min(popularData.length, 10); pos++) {
         let anime = popularData[pos];
         if (!anime) continue;
@@ -50,7 +94,22 @@ async function getTrendingAnimes(popularData) {
         let type = anime.type || "TV";
         let status = anime.release || anime.released || "Available";
         let url = "./anime.html?anime_id=" + encodeURIComponent(id);
+        
+        // ✅ Default to thumbnail if no banner
         let poster = anime.image || anime.poster || "./static/loading1.gif";
+        
+        // ✅ Try to get banner image from Anilist
+        try {
+            const anilistData = await searchAnilistForBanner(title);
+            if (anilistData && anilistData.bannerImage) {
+                poster = anilistData.bannerImage;
+                console.log(`✅ Got banner for ${title}:`, poster);
+            } else if (anilistData && anilistData.coverImage) {
+                poster = anilistData.coverImage;
+            }
+        } catch (err) {
+            console.warn(`⚠️ Could not get banner for ${title}, using default`);
+        }
 
         SLIDER_HTML += `<div class="mySlides fade">
             <div class="data-slider">
@@ -85,49 +144,6 @@ async function getTrendingAnimes(popularData) {
     }
     
     console.log("✅ Banner loaded successfully");
-}
-
-// Most Popular section
-async function getPopularAnimes(popularData) {
-    if (!popularData || popularData.length === 0) {
-        console.warn("⚠️ No popular anime data");
-        document.querySelector(".popularg").innerHTML = '<p style="color: white; padding: 20px;">Loading popular anime...</p>';
-        return;
-    }
-
-    console.log(`🔥 Loading popular section with ${popularData.length} anime...`);
-
-    let POPULAR_HTML = "";
-
-    for (let pos = 0; pos < Math.min(popularData.length, 20); pos++) {
-        let anime = popularData[pos];
-        if (!anime) continue;
-        
-        let title = anime.title || anime.name || "Unknown";
-        let id = anime.id || "";
-        let url = "./anime.html?anime_id=" + encodeURIComponent(id);
-        let image = anime.image || anime.poster || "./static/loading1.gif";
-        let subOrDub = (title.toLowerCase().includes("dub") || anime.isDub) ? "DUB" : "SUB";
-
-        POPULAR_HTML += `<a href="${url}">
-            <div class="poster la-anime">
-                <div id="shadow1" class="shadow">
-                    <div class="dubb"># ${pos + 1}</div>
-                    <div class="dubb dubb2">${subOrDub}</div>
-                </div>
-                <div id="shadow2" class="shadow">
-                    <img class="lzy_img" src="./static/loading1.gif" data-src="${image}" 
-                         onerror="this.src='./static/loading1.gif'" alt="${title}">
-                </div>
-                <div class="la-details">
-                    <h3>${title}</h3>
-                </div>
-            </div>
-        </a>`;
-    }
-
-    document.querySelector(".popularg").innerHTML = POPULAR_HTML;
-    console.log("✅ Popular section loaded");
 }
 
 // Recent section - initial load
@@ -454,3 +470,4 @@ if (document.readyState === 'loading') {
 } else {
     initializePage();
 }
+
