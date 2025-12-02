@@ -122,7 +122,7 @@ async function loadVideo(name, episodeData) {
 }
 
 // ============================================
-// FIXED: selectTelegramServer with Direct URL Support
+// FIXED: selectTelegramServer - Proper Direct URL Handling
 // ============================================
 
 window.selectTelegramServer = async function(btn) {
@@ -144,11 +144,23 @@ window.selectTelegramServer = async function(btn) {
     // Get data from button
     const channelName = btn.getAttribute("data-channel");
     const messageId = btn.getAttribute("data-msgid");
-    const directUrl = btn.getAttribute("data-direct-url");  // ✅ Get direct URL
+    let directUrl = btn.getAttribute("data-direct-url");  // ✅ Get direct URL
     const videoUrl = btn.getAttribute("data-video-url");
     const quality = btn.textContent.trim();
 
-    console.log('🎥 Video info:', { channelName, messageId, directUrl, videoUrl, quality });
+    console.log('🎥 Raw attributes:', { 
+        channelName, 
+        messageId, 
+        directUrl, 
+        videoUrl, 
+        quality 
+    });
+
+    // ✅ FIX: Clean up the direct URL - remove quotes and whitespace
+    if (directUrl) {
+        directUrl = directUrl.trim().replace(/^["']|["']$/g, '');
+        console.log('🧹 Cleaned direct URL:', directUrl);
+    }
 
     // Mark button as active
     for (let i = 0; i < buttons.length; i++) {
@@ -165,8 +177,13 @@ window.selectTelegramServer = async function(btn) {
     `;
 
     try {
-        // ✅ Priority 1: If direct URL is available, use it immediately
-        if (directUrl && directUrl !== 'null' && directUrl !== 'undefined' && directUrl.startsWith('http')) {
+        // ✅ Priority 1: If direct URL is available and valid, use it immediately
+        if (directUrl && 
+            directUrl !== 'null' && 
+            directUrl !== 'undefined' && 
+            directUrl !== '' &&
+            (directUrl.startsWith('http://') || directUrl.startsWith('https://'))) {
+            
             console.log('✅ Using direct URL from caption:', directUrl);
 
             videoContainer.innerHTML = `
@@ -183,7 +200,12 @@ window.selectTelegramServer = async function(btn) {
         }
 
         // ✅ Priority 2: Check if videoUrl is already a direct URL
-        if (videoUrl && videoUrl !== 'null' && videoUrl !== 'undefined' && videoUrl.startsWith('http')) {
+        if (videoUrl && 
+            videoUrl !== 'null' && 
+            videoUrl !== 'undefined' && 
+            videoUrl !== '' &&
+            (videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
+            
             console.log('✅ Using direct URL from videoUrl:', videoUrl);
 
             videoContainer.innerHTML = `
@@ -207,8 +229,13 @@ window.selectTelegramServer = async function(btn) {
             console.log('🔄 Attempting to get stream URL from API:', streamUrl);
 
             try {
-                const response = await fetch(streamUrl, { timeout: 10000 });
+                const response = await fetch(streamUrl, { 
+                    timeout: 10000,
+                    headers: { 'Accept': 'application/json' }
+                });
                 const data = await response.json();
+
+                console.log('📦 API Response:', data);
 
                 if (data.videoUrl || data.url || data.streamUrl) {
                     const apiDirectUrl = data.videoUrl || data.url || data.streamUrl;
@@ -716,3 +743,4 @@ window.episodeSelectChange = episodeSelectChange;
 
 console.log("📜 episode.js loaded, calling loadData()...");
 loadData();
+
