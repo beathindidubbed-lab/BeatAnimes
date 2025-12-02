@@ -112,11 +112,8 @@
         document.addEventListener("DOMContentLoaded", () => {
             const video = document.querySelector("video");
 
-            // Set poster image
-            video.setAttribute(
-                "data-poster",
-                `https://thumb.techzbots1.workers.dev/get/${id}`
-            );
+            // ✅ REMOVED: No longer using TechzBots for posters
+            // Poster images will come from Anilist instead
 
             const defaultOptions = {
                 keyboard: {
