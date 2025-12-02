@@ -1,5 +1,6 @@
+// BeatAnimes/js/index.js - FIXED VERSION with banner support
+
 const IndexApi = "/home";
-const recentapi = "/recent/";
 const AvailableServers = ["https://beatanimesapi.onrender.com"];
 
 function getApiServer() {
@@ -40,7 +41,7 @@ async function getJson(path, errCount = 0) {
     }
 }
 
-// Banner section
+// ✅ FIXED: Banner now uses bannerImage for background
 async function getTrendingAnimes(popularData) {
     if (!popularData || popularData.length === 0) {
         console.warn("⚠️ No banner data");
@@ -60,9 +61,10 @@ async function getTrendingAnimes(popularData) {
         let type = anime.type || "TV";
         let status = "Available";
         let url = "./anime.html?anime_id=" + encodeURIComponent(id);
-        let poster = anime.image || "./static/loading1.gif";
-
-        const imageUrl = poster.startsWith('http') ? poster : './static/loading1.gif';
+        
+        // ✅ Use bannerImage for the slider background, fallback to coverImage if not available
+        let bannerUrl = anime.banner || anime.bannerImage || anime.image || "./static/loading1.gif";
+        let coverUrl = anime.image || anime.coverImage || "./static/loading1.gif";
 
         SLIDER_HTML += `<div class="mySlides fade">
             <div class="data-slider">
@@ -84,7 +86,7 @@ async function getTrendingAnimes(popularData) {
                 </div>
             </div>
             <div class="shado"><a href="${url}"></a></div>
-            <img src="${imageUrl}" onerror="this.src='./static/loading1.gif'" alt="${title}">
+            <img src="${bannerUrl}" onerror="this.onerror=null; this.src='${coverUrl}'" alt="${title}">
         </div>`;
     }
 
@@ -98,7 +100,7 @@ async function getTrendingAnimes(popularData) {
     console.log("✅ Banner loaded");
 }
 
-// ✅ ADDED: Popular section function
+// Popular section - uses coverImage (thumbnail)
 async function getPopularAnimes(popularData) {
     if (!popularData || popularData.length === 0) {
         console.warn("⚠️ No popular anime");
@@ -118,7 +120,9 @@ async function getPopularAnimes(popularData) {
         let title = anime.title || anime.name || "Unknown";
         let id = anime.id || "";
         let url = "./anime.html?anime_id=" + encodeURIComponent(id);
-        let image = anime.image || "./static/loading1.gif";
+        
+        // ✅ Use coverImage for thumbnails
+        let image = anime.image || anime.coverImage || "./static/loading1.gif";
         let tag = anime.source ? anime.source.toUpperCase() : "ANIME";
 
         POPULAR_HTML += `<a href="${url}">
@@ -147,7 +151,7 @@ async function initRecentSection(recentData) {
     if (!recentData || recentData.length === 0) {
         console.warn("⚠️ No recent data");
         document.querySelector(".recento").innerHTML = 
-            '<p style="color: white; padding: 20px; text-align: center;">No recent releases available</p>';
+            '<p style="color: white; padding: 20px; text-align: center;">No recent releases</p>';
         return;
     }
 
@@ -262,10 +266,7 @@ async function initializePage() {
         console.log("🚀 Starting BeatAnimes...");
         if (loader) loader.style.display = "block";
 
-        console.log("📡 Fetching /home...");
         const homeResponse = await getJson(IndexApi);
-        console.log("📦 Home response:", homeResponse);
-        
         let homeData = homeResponse.results || homeResponse;
         
         let popularData = homeData.popular || homeData.trending || [];
@@ -279,7 +280,7 @@ async function initializePage() {
 
         if (popularData.length > 0) {
             await getTrendingAnimes(popularData);
-            await getPopularAnimes(popularData); // ✅ NOW THIS FUNCTION EXISTS
+            await getPopularAnimes(popularData);
             
             slideIndex = 1;
             showSlides(slideIndex);
@@ -301,10 +302,11 @@ async function initializePage() {
         if (loader) {
             loader.innerHTML = `
                 <div style="color: white; text-align: center; padding: 40px;">
+                    <i class="fa fa-exclamation-triangle" style="font-size: 60px; color: #eb3349; margin-bottom: 20px;"></i>
                     <h2 style="color: #eb3349;">Failed to Load</h2>
                     <p>${error.message}</p>
                     <button onclick="location.reload()" style="background: #eb3349; color: white; padding: 12px 30px; border: none; border-radius: 25px; cursor: pointer; margin-top: 20px;">
-                        Retry
+                        <i class="fa fa-refresh"></i> Retry
                     </button>
                 </div>
             `;
