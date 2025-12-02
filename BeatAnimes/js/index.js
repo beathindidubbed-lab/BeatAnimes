@@ -94,7 +94,8 @@ async function getTrendingAnimes(popularData) {
     if (container) {
         container.innerHTML = SLIDER_HTML + 
             '<a class="prev" onclick="plusSlides(-1)">&#10094;</a>' +
-            '<a class="next" onclick="plusSlides(1)">&#10095;</a>';
+            '<a class="next" onclick="plusSlides(1)">&#10095;</a>' +
+            '<div class="swipe-hint"><i class="fa fa-hand-o-right"></i> Swipe to browse</div>';
     }
     
     console.log("✅ Banner loaded");
@@ -194,6 +195,13 @@ async function initRecentSection(recentData) {
 let slideIndex = 0;
 let clickes = 0;
 
+// ✅ NEW: Touch/Swipe support variables
+let touchStartX = 0;
+let touchEndX = 0;
+let isDragging = false;
+let dragStartX = 0;
+let currentTranslate = 0;
+
 function showSlides(n) {
     let slides = document.getElementsByClassName("mySlides");
     if (!slides || slides.length === 0) return;
@@ -241,6 +249,120 @@ function plusSlides(n) {
     clickes = 1;
 }
 
+// ✅ NEW: Initialize swipe/drag functionality
+function initializeSwipe() {
+    const container = document.querySelector('.slideshow-container');
+    if (!container) return;
+    
+    console.log('✅ Swipe functionality initialized');
+    
+    // Touch events (mobile)
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    
+    // Mouse events (desktop drag)
+    container.addEventListener('mousedown', handleMouseDown);
+    container.addEventListener('mousemove', handleMouseMove);
+    container.addEventListener('mouseup', handleMouseUp);
+    container.addEventListener('mouseleave', handleMouseUp);
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', handleKeyPress);
+    
+    // Prevent default drag on images
+    const images = container.querySelectorAll('img');
+    images.forEach(img => {
+        img.addEventListener('dragstart', (e) => e.preventDefault());
+    });
+}
+
+// ✅ NEW: Keyboard navigation
+function handleKeyPress(e) {
+    if (e.key === 'ArrowLeft') {
+        plusSlides(-1);
+        console.log('⌨️ Left arrow - Previous slide');
+    } else if (e.key === 'ArrowRight') {
+        plusSlides(1);
+        console.log('⌨️ Right arrow - Next slide');
+    }
+}
+
+// Touch handlers
+function handleTouchStart(e) {
+    touchStartX = e.touches[0].clientX;
+}
+
+function handleTouchMove(e) {
+    touchEndX = e.touches[0].clientX;
+}
+
+function handleTouchEnd() {
+    handleSwipe();
+}
+
+// Mouse handlers
+function handleMouseDown(e) {
+    // Ignore if clicking on buttons or links
+    if (e.target.closest('.prev') || e.target.closest('.next') || e.target.closest('a')) {
+        return;
+    }
+    
+    isDragging = true;
+    dragStartX = e.clientX;
+    document.querySelector('.slideshow-container').style.cursor = 'grabbing';
+}
+
+function handleMouseMove(e) {
+    if (!isDragging) return;
+    
+    const currentX = e.clientX;
+    const diff = currentX - dragStartX;
+    
+    // Visual feedback (optional - adds slight movement)
+    if (Math.abs(diff) > 5) {
+        currentTranslate = diff;
+    }
+}
+
+function handleMouseUp(e) {
+    if (!isDragging) return;
+    
+    isDragging = false;
+    document.querySelector('.slideshow-container').style.cursor = 'grab';
+    
+    const currentX = e.clientX || dragStartX;
+    touchStartX = dragStartX;
+    touchEndX = currentX;
+    
+    handleSwipe();
+    currentTranslate = 0;
+}
+
+// Swipe detection
+function handleSwipe() {
+    const swipeThreshold = 50; // Minimum distance for a swipe
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) < swipeThreshold) {
+        return; // Not enough movement
+    }
+    
+    if (diff > 0) {
+        // Swiped left - go to next slide
+        plusSlides(1);
+        console.log('👆 Swiped left - Next slide');
+    } else {
+        // Swiped right - go to previous slide
+        plusSlides(-1);
+        console.log('👆 Swiped right - Previous slide');
+    }
+    
+    // Reset
+    touchStartX = 0;
+    touchEndX = 0;
+}
+
 async function RefreshLazyLoader() {
     const imageObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
@@ -285,6 +407,11 @@ async function initializePage() {
             slideIndex = 1;
             showSlides(slideIndex);
             showSlides2();
+            
+            // ✅ Initialize swipe after banner is loaded
+            setTimeout(() => {
+                initializeSwipe();
+            }, 500);
         }
 
         if (recentData.length > 0) {
