@@ -1,1016 +1,614 @@
-html,
-body {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-    background-color: #282828;
-    scroll-behavior: smooth;
-    user-select: none;
-}
-
-header {
-    width: 100%;
-}
-
-footer {
-    background: #eb3349;
-    display: flex;
-    flex-wrap: nowrap;
-    align-content: center;
-    justify-content: center;
-    align-items: center;
-    height: 50px;
-}
-
-footer div {
-    text-align: center;
-}
-
-footer a {
-    color: white;
-    font-family: "Montserrat", sans-serif;
-    font-size: 11px;
-    font-weight: 500;
-}
-
-@media only screen and (min-width: 400px) {
-    footer a {
-        font-size: 13px;
-    }
-}
-
-@media only screen and (min-width: 600px) {
-    footer a {
-        font-size: 15px;
-    }
-}
-
-#head-div {
-    background: linear-gradient(to right, #eb3349 40%, #f45c43);
-    width: 100%;
-    text-align: center;
-    height: 86px;
-    margin: auto;
-    font-family: "Roboto", sans-serif;
-    font-weight: 500;
-    font-size: x-large;
-    color: white;
-}
-
-h1 {
-    color: #eb3349;
-    font-family: "Poppins", sans-serif;
-}
-
-i {
-    margin: auto;
-    margin-right: 10px;
-}
-
-a {
-    text-decoration: none;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0px;
-    padding: 0px;
-}
-
-body,
-html {
-    height: 100%;
-    width: 100%;
-    padding: 0px;
-    margin: 0px;
-    background-color: #14151a;
-    background-image: none;
-    display: block;
-    height: fit-content;
-    width: 100vw;
-}
-
-html {
-    position: relative;
-}
-
-body {
-    overflow-x: hidden;
-}
-
-section {
-    position: relative;
-    width: 100%;
-    margin: 0px;
-    height: fit-content;
-}
-
-header {
-    position: relative;
-}
-
-div {
-    box-sizing: border-box;
-    display: block;
-}
-
-.poster {
-    box-sizing: border-box;
-    text-align: center;
-    display: inline;
-    padding: 20px;
-    margin: 0px;
-    overflow: visible;
-    margin-top: 20px;
-}
-
-section img {
-    box-sizing: border-box;
-    height: fit-content;
-    max-width: 200px;
-    border: 5px solid white;
-    border-radius: 5px;
-    margin: auto;
-}
-
-h1 {
-    font-family: "Montserrat", sans-serif;
-    font-size: 40px;
-    color: white;
-    font-weight: 700;
-    margin: 0px;
-    width: 100%;
-    text-align: center;
-    font-size: 24px;
-    text-align: center;
-    line-height: 1.2em;
-}
-
-.cbox {
-    border: 1px #6d6d6d solid;
-    color: #dfdfdf;
-    font-family: "Roboto", sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    padding: 2px 4px;
-    border-radius: 4px;
-}
-
-.dot {
-    box-sizing: border-box;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    display: inline-block;
-    margin: 3px 6px;
-}
-
-.year {
-    color: #dfdfdf;
-    font-family: "Montserrat", sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    padding: 2px 4px;
-}
-
-.watch-btn {
-    background: #ed3832;
-    color: black;
-    border-radius: 4px;
-    font-weight: 400;
-    font-family: "Montserrat", sans-serif;
-    padding: 10px 20px;
-    text-decoration: none;
-}
-
-#watchh {
-    margin: 30px 0px 20px 0px;
-}
-
-::-webkit-scrollbar {
-    width: 5px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f100;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #888;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-@media only screen and (min-width: 600px) {
-    h1 {
-        font-size: 28px;
-    }
-
-    h1 {
-        text-align: left;
-        font-weight: 700;
-        font-size: 30px;
-    }
-
-    #watchh {
-        margin: 50px 0px;
-    }
-
-    section img {
-        box-sizing: border-box;
-        height: fit-content;
-        max-width: 300px;
-        width: 100%;
-        border: 5px solid white;
-        border-radius: 5px;
-        margin: auto;
-    }
-
-    .poster {
-        box-sizing: border-box;
-        text-align: center;
-        display: inline;
-        margin: 0px;
-        overflow: visible;
-        margin-top: 20px;
-        width: 250px;
-    }
-}
-
-@media only screen and (min-width: 1200px) {
-    h1 {
-        text-align: left;
-        font-weight: 700;
-        font-size: 30px;
-    }
-
-    #watchh {
-        margin: 50px 0px;
-    }
-
-    .poster {
-        box-sizing: border-box;
-        text-align: center;
-        display: inline;
-        margin: 0px;
-        overflow: visible;
-        margin-top: 20px;
-        width: 300px;
-    }
-
-    section img {
-        height: 100%;
-        width: 100%;
-    }
-}
-
-.divox {
-    padding: 0px;
-}
-
-h2 {
-    font-family: "Montserrat", sans-serif;
-    color: #ed3832;
-    font-weight: 500;
-    width: 100%;
-    font-size: 20px;
-    margin: 10px;
-}
-
-#latest {
-    margin-left: 20px;
-    margin-top: 20px;
-    margin-bottom: 15px;
-}
-
-#latest2 a {
-    color: white;
-    text-decoration: none;
-}
-
-#latest2 {
-    padding: 0px;
-    box-sizing: border-box;
-    display: inline-block;
-    text-align: center;
-    width: 100%;
-    height: fit-content;
-}
-
-.la-anime {
-    display: inline-block;
-    padding: 0px;
-    margin: 0px 3px;
-    margin-bottom: 6px;
-    position: relative;
-    width: calc(50% - 20px);
-    max-width: 200px;
-}
-
-.shadow {
-    box-shadow: inset 0px -100px 50px -50px rgba(32, 33, 37, 1);
-    position: relative;
-    height: 200px;
-    z-index: 1;
-}
-
-#shadow1 {
-    box-shadow: inset 0px -100px 50px -50px rgba(32, 33, 37, 1);
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    right: 0px;
-    z-index: 3;
-}
-
-#shadow2 {
-    position: relative;
-    top: 0px;
-    left: 0px;
-    right: 0px;
-    z-index: 1;
-}
-
-.shadow img {
-    border: none;
-    border-radius: 0px;
-    height: 100%;
-    width: 100%;
-    object-fit: cover;
-    object-position: center;
-    vertical-align: middle;
-    overflow: hidden;
-    position: relative;
-    top: 0px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    max-width: unset;
-    z-index: 1;
-}
-
-.dubb {
-    color: white;
-    background-color: red;
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    display: block;
-    width: fit-content;
-    border-radius: 4px;
-    font-weight: 600;
-    font-family: "Montserrat", sans-serif;
-    font-size: 12px;
-    padding: 2px 4px;
-    z-index: 5;
-}
-
-.dubb2 {
-    left: unset;
-    right: 10px;
-    background-color: white;
-    color: black;
-}
-
-.la-details {
-    background-color: rgb(32, 33, 37);
-    width: 100%;
-    box-sizing: border-box;
-    padding: 10px;
-    overflow: hidden;
-}
-
-.la-details h3 {
-    margin: 0px;
-    font-family: "Montserrat", sans-serif;
-    font-size: 14px;
-    text-align: left;
-    width: 100%;
-    color: white;
-    font-weight: 500;
-    margin-bottom: 8px;
-    height: fit-content;
-    overflow: hidden;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-text-size-adjust: none;
-    list-style: none;
-    box-sizing: border-box;
-    height: 37px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-#extra {
-    text-align: left;
-    overflow: hidden;
-    width: 100%;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-text-size-adjust: none;
-    list-style: none;
-    display: -webkit-box;
-    -webkit-line-clamp: 1;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.la-details span {
-    color: rgba(255, 255, 255, 0.3);
-    font-family: "Montserrat", sans-serif;
-    font-size: 12px;
-}
-
-#search-div {
-    height: fit-content;
-    background-color: white;
-    border-radius: 5px;
-    height: 40px;
-    width: 30%;
-    position: absolute;
-    top: 25px;
-    right: 10px;
-}
-
-#search-div input {
-    height: 28px;
-    background-color: rgba(255, 255, 255, 0);
-    border: none;
-    padding-left: 5px;
-    font-size: 14px;
-    font-weight: 400;
-    color: black;
-    overflow: visible;
-    font-family: "Montserrat", sans-serif;
-    width: calc(100% - 27px);
-}
-
-#search-div button {
-    background-color: rgba(255, 255, 255, 0);
-    border: none;
-    height: 40px;
-    width: 20px;
-}
-
-#search-div button i {
-    width: 16px;
-    height: 16px;
-    margin: 0px;
-}
-
-#search-div form {
-    vertical-align: middle;
-    height: 100%;
-    width: 100%;
-}
-
-#query {
-    width: calc(100% - 55px);
-    height: 40px;
-}
-
-#query:focus {
-    border: none;
-}
-
-#title1 {
-    width: 70%;
-    height: 86px
-}
-
-#title1 a {
-    height: 86px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-@media screen and (max-width: 520px) {
-    #title1 img {
-        height: 55px;
-    }
-}
-
-.extra1 {
-    line-height: 25px;
-}
-
-@media only screen and (min-width: 420px) {
-    .shadow {
-        height: 240px;
-    }
-}
-
-@media only screen and (min-width: 580px) {
-
-
-    #search-div input {
-        width: calc(100% - 55px);
-    }
-
-    .la-anime {
-        max-width: 220px;
-    }
-
-    #title1 {
-        width: 100%;
-        text-align: center;
-    }
-
-    #search-div {
-        height: fit-content;
-        background-color: white;
-        margin-right: 20px;
-        border-radius: 5px;
-        height: 40px;
-    }
-
-    #search-div input {
-        height: 28px;
-        background-color: rgba(255, 255, 255, 0);
-        border: none;
-        padding-left: 15px;
-        font-size: 14px;
-        font-weight: 400;
-        color: black;
-        overflow: visible;
-        font-family: "Montserrat", sans-serif;
-    }
-
-    #search-div button {
-        background-color: rgba(255, 255, 255, 0);
-        border: none;
-        height: 40px;
-        width: 40px;
-    }
-
-    #search-div button i {
-        width: 16px;
-        height: 16px;
-        margin: 0px;
-    }
-
-    #search-div form {
-        vertical-align: middle;
-        height: 100%;
-        width: 100%;
-    }
-
-    #query {
-        width: 200px;
-        height: 40px;
-    }
-
-    #query:focus {
-        border: none;
-    }
-
-    #title1 {
-        width: calc(100% - 247px);
-        text-align: center;
-    }
-
-    #search-div {
-        position: absolute;
-        right: 0px;
-        top: 25px;
-    }
-}
-
-@media only screen and (min-width: 1200px) {
-    .la-anime {
-        max-width: 220px;
-    }
-
-    #title1 {
-        width: calc(100% - 50px);
-        text-align: center;
-    }
-
-    #search-div {
-        position: absolute;
-        right: 0px;
-        top: 25px;
-    }
-}
-
-* {
-    box-sizing: border-box;
-}
-
-.slideshow-container {
-    width: 100%;
-    position: relative;
-}
-
-.data-slider h1 {
-    -webkit-box-orient: vertical;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-}
-
-.mySlides {
-    display: none;
-    height: 400px;
-    width: 100%;
-    overflow: hidden;
-    display: none;
-    flex-wrap: wrap;
-    align-content: flex-end;
-    justify-content: flex-start;
-}
-
-.mySlides img {
-    width: 100%;
-    height: 100%;
-    max-width: unset;
-    max-height: unset;
-    border: none;
-    object-fit: cover;
-    position: absolute;
-}
-
-.shado {
-    box-shadow: 75px 0px 150px 100px #14151a inset;
-    z-index: 1;
-    width: 100%;
-    height: 100%;
-    position: absolute;
-}
-
-.shado a {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
-
-.data-slider {
-    z-index: 2;
-    margin-left: 5%;
-    max-width: 50%;
-}
-
-.data-slider div {
-    margin-top: 15px;
-}
-
-.year {
-    color: white;
-    font-family: "Montserrat", sans-serif;
-}
-
-.small-synop {
-    color: white;
-    font-family: "Montserrat", sans-serif;
-    font-size: 12px;
-    margin-top: 15px;
-    -webkit-tap-highlight-color: transparent;
-    --breakpoint-xs: 0;
-    --breakpoint-sm: 576px;
-    --breakpoint-md: 768px;
-    --breakpoint-lg: 992px;
-    --breakpoint-xl: 1200px;
-    text-align: left;
-    color: #fff;
-    -webkit-text-size-adjust: none;
-    box-sizing: border-box;
-    line-height: 1.6em;
-    font-weight: 300;
-    margin-bottom: 30px;
-    font-size: 12px;
-    -webkit-box-orient: vertical;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    overflow: hidden;
-}
-
-.watch-btn {
-    font-size: 14px;
-    padding: 8px 12px;
-}
-
-.spotlight {
-    color: #ed3832;
-    font-family: "Montserrat", sans-serif;
-    font-size: 14px;
-    margin-bottom: 20px;
-}
-
-.fa-info-circle,
-.fa-play-circle {
-    margin-right: 4px;
-}
-
-.fa-angle-right {
-    margin-left: 4px;
-    margin-right: 0px;
-}
-
-.watch-btn2 {
-    background-color: #4a4b51;
-    color: white;
-    margin-left: 15px;
-}
-
-.year2 {
-    margin-left: 10px;
-}
-
-.year i {
-    color: white;
-}
-
-.prev,
-.next {
-    z-index: 5;
-}
-
-.cbox1 {
-    background-color: #ed3832;
-    color: black;
-    font-family: "Montserrat", sans-serif;
-    border: none;
-    margin-left: 10px;
-    font-size: 12px;
-}
-
-.cbox2 {
-    background-color: white;
-    color: black;
-    font-family: "Montserrat", sans-serif;
-    font-size: 12px;
-    border: none;
-    margin-left: 5px;
-}
-
-.prev,
-.next {
-    cursor: pointer;
-    position: absolute;
-    top: 50%;
-    width: auto;
-    margin-top: -22px;
-    padding: 16px;
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    transition: 0.6s ease;
-    border-radius: 0 3px 3px 0;
-    user-select: none;
-    background: rgba(0, 0, 0, 0.2);
-}
-
-.next {
-    right: 0;
-    border-radius: 3px 0 0 3px;
-}
-
-.prev:hover,
-.next:hover {
-    background-color: rgba(0, 0, 0, 0.8);
-}
-
-.dot:hover {
-    background-color: #717171;
-}
-
-.fade {
-    animation-name: fade;
-    animation-duration: 1.5s;
-}
-
-@media only screen and (max-width: 480px) {
-    .data-slider {
-        margin-left: 10px;
-    }
-
-    .data-slider h1 {
-        font-size: 16px;
-        text-align: left;
-    }
-
-    .spotlight {
-        font-size: 12px;
-        margin-bottom: 10px;
-    }
-
-    .extra1,
-    .small-synop {
-        display: none;
-    }
-
-    .mySlides {
-        height: 320px;
-    }
-
-    .data-slider {
-        max-width: 80%;
-        text-align: left;
-    }
-
-    .watch-btn {
-        font-size: 12px;
-        padding: 6px 12px;
-    }
-
-    .watch-btn2 {
-        margin-left: 10px;
-    }
-
-    #watchh {
-        margin: 20px 0px;
-    }
-
-    .shado {
-        box-shadow: 20px -20px 80px 40px #14151a inset;
-    }
-}
-
-@media only screen and (max-width: 760px) and (min-width: 480px) {
-    .shado {
-        box-shadow: 40px -20px 100px 50px #14151a inset;
-    }
-
-    .data-slider {
-        margin-left: 15px;
-    }
-
-    .data-slider h1 {
-        font-size: 20px;
-        text-align: left;
-    }
-
-    .spotlight {
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-
-    .extra1,
-    .small-synop {
-        display: none;
-    }
-
-    .mySlides {
-        height: 350px;
-    }
-
-    .data-slider {
-        max-width: 80%;
-        text-align: left;
-    }
-
-    .watch-btn {
-        font-size: 14px;
-        padding: 6px 12px;
-    }
-
-    .watch-btn2 {
-        margin-left: 10px;
-    }
-
-    #watchh {
-        margin: 0px;
-        margin-top: 30px;
-        margin-bottom: 20px;
-    }
-}
-
-#load {
-    text-align: center;
-    padding: 20px;
-}
-
-#load img {
-    width: 5%;
-    min-width: 40px;
-    border: none;
-}
-
-@keyframes fade {
-    from {
-        opacity: 0.4;
-    }
-
-    to {
-        opacity: 1;
-    }
-}
-
-@font-face {
-    font-family: "Montserrat";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw0aXpsog.woff2) format("woff2");
-    unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F,
-        U+FE2E-FE2F;
-}
-
-@font-face {
-    font-family: "Montserrat";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw9aXpsog.woff2) format("woff2");
-    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-
-@font-face {
-    font-family: "Montserrat";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw2aXpsog.woff2) format("woff2");
-    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169,
-        U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
-}
-
-@font-face {
-    font-family: "Montserrat";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw3aXpsog.woff2) format("woff2");
-    unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
-        U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-    font-family: "Montserrat";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/montserrat/v25/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCtr6Hw5aXo.woff2) format("woff2");
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-        U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
-        U+2215, U+FEFF, U+FFFD;
-}
-
-@font-face {
-    font-family: "Roboto";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu72xKOzY.woff2) format("woff2");
-    unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F,
-        U+FE2E-FE2F;
-}
-
-@font-face {
-    font-family: "Roboto";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu5mxKOzY.woff2) format("woff2");
-    unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-
-@font-face {
-    font-family: "Roboto";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu7mxKOzY.woff2) format("woff2");
-    unicode-range: U+1F00-1FFF;
-}
-
-@font-face {
-    font-family: "Roboto";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4WxKOzY.woff2) format("woff2");
-    unicode-range: U+0370-03FF;
-}
-
-@font-face {
-    font-family: "Roboto";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu7WxKOzY.woff2) format("woff2");
-    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169,
-        U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
-}
-
-@font-face {
-    font-family: "Roboto";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu7GxKOzY.woff2) format("woff2");
-    unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB,
-        U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-    font-family: "Roboto";
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxK.woff2) format("woff2");
-    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
-        U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212,
-        U+2215, U+FEFF, U+FFFD;
-}
-
-#sprite-plyr {
-    display: none;
-}
-img{
-    transition: all 1s ease;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Video Banner Slideshow</title>
+    <!-- Font Awesome for icons (play, info, arrows) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Load required fonts from Google Fonts via direct links -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base styles and variables for a dark theme */
+        :root {
+            --primary-bg: #14151a;
+            --highlight-color: #ed3832;
+            --text-light: white;
+            --text-secondary: #dfdfdf;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            background-color: var(--primary-bg);
+            font-family: 'Montserrat', sans-serif;
+            color: var(--text-light);
+            overflow-x: hidden;
+            box-sizing: border-box;
+            /* Using the background color defined in index.css from history: #282828 */
+            background-color: #282828; 
+            scroll-behavior: smooth;
+            user-select: none;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        /* --- START OF USER-PROVIDED CSS (Adapted/Integrated) --- */
+
+        .slideshow-container {
+            width: 100%;
+            position: relative;
+        }
+
+        .mySlides {
+            display: none;
+            height: 400px; /* Base height for medium screens */
+            width: 100%;
+            overflow: hidden;
+            /* The original CSS used flex-wrap, align-content, justify-content for positioning. 
+               We'll use flex column and justify-content: flex-end for modern positioning. */
+            display: flex; /* Active slide should be flex */
+            flex-direction: column;
+            justify-content: flex-end; /* Pushes content to the bottom */
+            position: relative;
+            padding-bottom: 40px; /* Space for content margin */
+        }
+
+        /* ✅ FIXED: Better image handling for banner images */
+        .mySlides img {
+            width: 100%;
+            height: 100%;
+            max-width: unset;
+            max-height: unset;
+            border: none;
+            object-fit: cover;
+            object-position: center center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0; /* Image behind shadow/text */
+        }
+
+        .shado {
+            /* Creates the gradient/shadow effect to ensure text visibility on the left */
+            box-shadow: 75px 0px 150px 100px #14151a inset;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .shado a {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .data-slider {
+            z-index: 2;
+            margin-left: 5%;
+            max-width: 50%;
+            position: relative;
+            /* Added padding-bottom to ensure content is above the very edge */
+            padding-bottom: 20px; 
+        }
+
+        .data-slider h1 {
+            color: var(--text-light);
+            font-family: "Montserrat", sans-serif;
+            font-weight: 700;
+            font-size: 32px;
+            text-align: left;
+            margin: 0 0 10px 0;
+            /* Text truncation */
+            -webkit-box-orient: vertical;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .data-slider div {
+            margin-top: 15px;
+        }
+
+        .spotlight {
+            color: #ed3832;
+            font-family: "Montserrat", sans-serif;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        /* Combining the year/rating/duration into one flex container for better alignment */
+        .extra1 {
+            display: flex;
+            align-items: center;
+        }
+
+        .cbox {
+            background-color: #4a4b51;
+            color: var(--text-secondary);
+            font-family: "Roboto", sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .dot {
+            box-sizing: border-box;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            display: inline-block;
+            margin: 0px 8px; /* Adjusted margin for better spacing */
+            vertical-align: middle;
+        }
+
+        .year {
+            color: white;
+            font-family: "Montserrat", sans-serif;
+            font-size: 14px;
+            /* Removed redundant properties */
+            display: inline-block; 
+            vertical-align: middle;
+        }
+        
+        /* The original snippet had cbox1/cbox2, but only 'cbox' is needed for the rating box */
+        .cbox1, .cbox2 {
+            display: none; /* Hide the unused classes from the original snippet */
+        }
+
+
+        .small-synop {
+            color: white;
+            font-family: "Montserrat", sans-serif;
+            font-size: 14px; /* Adjusted from 12px for better readability */
+            margin-top: 15px;
+            text-align: left;
+            line-height: 1.6em;
+            font-weight: 300;
+            margin-bottom: 30px;
+            /* Text truncation */
+            -webkit-box-orient: vertical;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+            max-width: 100%;
+        }
+
+        .watch-btn,
+        .watch-btn2 {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: 500;
+            font-family: "Montserrat", sans-serif;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .watch-btn {
+            background: #ed3832;
+            color: black;
+            font-size: 14px;
+            padding: 10px 20px;
+        }
+        .watch-btn:hover {
+            background-color: #ff554f;
+        }
+
+
+        .watch-btn2 {
+            background-color: #4a4b51;
+            color: white;
+            font-size: 14px;
+            padding: 10px 20px;
+            margin-left: 15px;
+        }
+        .watch-btn2:hover {
+             background-color: #63656d;
+        }
+
+        .fa-info-circle,
+        .fa-play-circle {
+            margin-right: 8px;
+        }
+
+        /* Hiding the unused fa-angle-right */
+        .fa-angle-right {
+             display: none;
+        }
+        
+        #watchh {
+            /* Container for buttons */
+            margin-top: 15px; 
+        }
+
+        .prev,
+        .next {
+            z-index: 5;
+            cursor: pointer;
+            position: absolute;
+            top: 50%;
+            width: auto;
+            margin-top: -22px;
+            padding: 16px;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            transition: 0.6s ease;
+            border-radius: 0 3px 3px 0;
+            user-select: none;
+            background: rgba(0, 0, 0, 0.3); /* Slightly darker background for better contrast */
+        }
+
+        .next {
+            right: 0;
+            border-radius: 3px 0 0 3px;
+        }
+
+        .prev:hover,
+        .next:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+
+        .fade {
+            animation-name: fade;
+            animation-duration: 1.5s;
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0.4;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Utility class to show the active slide */
+        .show {
+            display: flex !important; /* Overrides the initial display: none */
+        }
+        
+        /* --- MOBILE RESPONSIVE IMPROVEMENTS --- */
+        @media only screen and (max-width: 480px) {
+            .mySlides {
+                height: 320px;
+                padding-bottom: 20px;
+            }
+
+            .data-slider {
+                margin-left: 10px;
+                max-width: 90%;
+            }
+
+            .data-slider h1 {
+                font-size: 20px;
+                -webkit-line-clamp: 3;
+            }
+
+            .spotlight {
+                font-size: 12px;
+                margin-bottom: 10px;
+            }
+
+            .extra1, /* Year/rating/duration container */
+            .small-synop {
+                display: none; 
+            }
+            
+            .watch-btn, .watch-btn2 {
+                font-size: 12px;
+                padding: 8px 14px;
+                margin-left: 0;
+            }
+            
+            .watch-btn2 {
+                 margin-left: 10px;
+            }
+
+            .shado {
+                /* Adjusted shadow on mobile to cover less area, focusing on bottom left */
+                box-shadow: 20px -20px 80px 40px #14151a inset;
+            }
+
+            .mySlides img {
+                object-position: center top; 
+            }
+        }
+
+        @media only screen and (min-width: 481px) and (max-width: 768px) {
+            .mySlides {
+                height: 350px;
+                padding-bottom: 30px;
+            }
+
+            .shado {
+                box-shadow: 40px -20px 100px 50px #14151a inset;
+            }
+
+            .data-slider {
+                margin-left: 15px;
+                max-width: 70%;
+            }
+
+            .data-slider h1 {
+                font-size: 28px;
+            }
+
+            .spotlight {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .extra1 {
+                display: flex;
+                align-items: center;
+            }
+            .small-synop {
+                display: none;
+            }
+
+            .watch-btn, .watch-btn2 {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+            .watch-btn2 {
+                margin-left: 10px;
+            }
+        }
+        
+        /* --- DESKTOP - Wider banner support (Original code) --- */
+        @media only screen and (min-width: 769px) {
+            .mySlides {
+                height: 450px;
+                padding-bottom: 40px;
+            }
+            .data-slider {
+                max-width: 45%;
+            }
+        }
+        @media only screen and (min-width: 1200px) {
+            .mySlides {
+                height: 500px;
+            }
+        }
+
+        @media only screen and (min-width: 1600px) {
+            .mySlides {
+                height: 600px;
+            }
+        }
+        
+        /* Optional: Add a simple header for context */
+        header {
+            width: 100%;
+            padding: 15px 5%;
+            background-color: rgba(0, 0, 0, 0.4);
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+        header .logo {
+            color: var(--highlight-color);
+            font-weight: 700;
+            font-size: 24px;
+            font-family: 'Roboto', sans-serif;
+            text-decoration: none;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">STREAMFLIX</a>
+    </header>
+
+    <div class="slideshow-container">
+
+        <!-- Slide 1 -->
+        <div class="mySlides fade show">
+            <!-- Placeholder Image URL. Uses a dark color palette. -->
+            <img src="https://placehold.co/1920x600/1e293b/white?text=EPIC+FANTASY+ADVENTURE" alt="Epic Fantasy Adventure Banner" onerror="this.onerror=null;this.src='https://placehold.co/1920x600/334155/white?text=Slide+1+Fallback';">
+            <div class="shado"></div>
+            <div class="data-slider">
+                <p class="spotlight">SPOTLIGHT: NEW RELEASE</p>
+                <h1>Chronicles of the Starforged Realm: Season 1</h1>
+                <div class="extra1">
+                    <span class="cbox">TV-MA</span>
+                    <span class="dot"></span>
+                    <span class="year">2024</span>
+                    <span class="dot"></span>
+                    <span class="year"><i class="fa-solid fa-star"></i> 8.9</span>
+                    <span class="dot"></span>
+                    <span class="year"><i class="fa-solid fa-clock"></i> 5 Seasons</span>
+                </div>
+                <p class="small-synop">A retired hero must return to a fractured kingdom when an ancient evil resurfaces, threatening to consume all known realities. A quest begins across forbidden lands and celestial oceans. A global phenomenon.</p>
+                <div id="watchh">
+                    <a href="#" class="watch-btn"><i class="fa-solid fa-play-circle"></i> WATCH NOW</a>
+                    <a href="#" class="watch-btn2"><i class="fa-solid fa-info-circle"></i> DETAILS</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2 -->
+        <div class="mySlides fade">
+            <img src="https://placehold.co/1920x600/4c0519/white?text=CRIME+THRILLER+SERIES" alt="Crime Thriller Series Banner" onerror="this.onerror=null;this.src='https://placehold.co/1920x600/800000/white?text=Slide+2+Fallback';">
+            <div class="shado"></div>
+            <div class="data-slider">
+                <p class="spotlight">TRENDING: CRIME / THRILLER</p>
+                <h1>The Silent Witness Protocol</h1>
+                <div class="extra1">
+                    <span class="cbox">R</span>
+                    <span class="dot"></span>
+                    <span class="year">2023</span>
+                    <span class="dot"></span>
+                    <span class="year"><i class="fa-solid fa-star"></i> 7.5</span>
+                    <span class="dot"></span>
+                    <span class="year"><i class="fa-solid fa-film"></i> 1h 58m</span>
+                </div>
+                <p class="small-synop">A forensic accountant discovers a massive conspiracy hidden within the city's infrastructure, forcing him to go on the run from powerful, unseen enemies and the organization they protect.</p>
+                <div id="watchh">
+                    <a href="#" class="watch-btn"><i class="fa-solid fa-play-circle"></i> PLAY MOVIE</a>
+                    <a href="#" class="watch-btn2"><i class="fa-solid fa-info-circle"></i> MORE INFO</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3 -->
+        <div class="mySlides fade">
+            <img src="https://placehold.co/1920x600/064e3b/white?text=DOCUMENTARY+NATURE+WILDLIFE" alt="Nature Documentary Banner" onerror="this.onerror=null;this.src='https://placehold.co/1920x600/047857/white?text=Slide+3+Fallback';">
+            <div class="shado"></div>
+            <div class="data-slider">
+                <p class="spotlight">CRITICS' CHOICE: DOCUMENTARY</p>
+                <h1>Planet Earth: The Deep Dive</h1>
+                <div class="extra1">
+                    <span class="cbox">G</span>
+                    <span class="dot"></span>
+                    <span class="year">2022</span>
+                    <span class="dot"></span>
+                    <span class="year"><i class="fa-solid fa-star"></i> 9.3</span>
+                    <span class="dot"></span>
+                    <span class="year"><i class="fa-solid fa-water"></i> 6 Episodes</span>
+                </div>
+                <p class="small-synop">Explore the hidden lives of creatures inhabiting the darkest depths of the ocean, revealing stunning ecosystems never before captured on film. Narrated by a famous voice.</p>
+                <div id="watchh">
+                    <a href="#" class="watch-btn"><i class="fa-solid fa-play-circle"></i> START EPISODE</a>
+                    <a href="#" class="watch-btn2"><i class="fa-solid fa-info-circle"></i> EPISODE LIST</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation buttons -->
+        <a class="prev" onclick="plusSlides(-1)">&#10094;</a>
+        <a class="next" onclick="plusSlides(1)">&#10095;</a>
+    </div>
+
+    <!-- The dots/circles container (optional) -->
+    <div style="text-align:center; padding: 15px;">
+        <span class="dot-indicator" onclick="currentSlide(1)"></span>
+        <span class="dot-indicator" onclick="currentSlide(2)"></span>
+        <span class="dot-indicator" onclick="currentSlide(3)"></span>
+    </div>
+
+    <script>
+        // Start the slide index at 1 (for the first slide)
+        let slideIndex = 1;
+        let autoSlideTimer;
+        
+        // Define a CSS class for the indicators (since .dot was used inside the slider content)
+        const indicatorStyle = document.createElement('style');
+        indicatorStyle.innerHTML = `
+            .dot-indicator {
+                cursor: pointer;
+                height: 10px;
+                width: 10px;
+                margin: 0 4px;
+                background-color: #717171;
+                border-radius: 50%;
+                display: inline-block;
+                transition: background-color 0.6s ease;
+            }
+            .active-dot {
+                background-color: #ed3832; /* Highlight color for active dot */
+                transform: scale(1.2);
+            }
+        `;
+        document.head.appendChild(indicatorStyle);
+
+
+        // Main function to display the slide
+        function showSlides(n) {
+            let i;
+            let slides = document.getElementsByClassName("mySlides");
+            let dots = document.getElementsByClassName("dot-indicator");
+
+            // Wrap around logic (go to first slide if past the last, or last slide if before the first)
+            if (n > slides.length) { slideIndex = 1 }
+            if (n < 1) { slideIndex = slides.length }
+
+            // Hide all slides and remove the fade class
+            for (i = 0; i < slides.length; i++) {
+                slides[i].classList.remove('show');
+                slides[i].classList.remove('fade');
+            }
+
+            // Remove active state from all dots
+            for (i = 0; i < dots.length; i++) {
+                dots[i].classList.remove("active-dot");
+            }
+
+            // Show the current slide and add fade animation
+            const activeSlide = slides[slideIndex - 1];
+            if (activeSlide) {
+                activeSlide.classList.add('show');
+                activeSlide.classList.add('fade');
+            }
+            
+            // Mark the current dot as active
+            const activeDot = dots[slideIndex - 1];
+            if (activeDot) {
+                 activeDot.classList.add("active-dot");
+            }
+        }
+
+        // Next/previous controls
+        function plusSlides(n) {
+            // Clear auto advance timer when user interacts
+            clearTimeout(autoSlideTimer);
+            // Show the new slide
+            showSlides(slideIndex += n);
+            // Restart auto advance
+            startAutoAdvance();
+        }
+
+        // Thumbnail image controls (dots)
+        function currentSlide(n) {
+            // Clear auto advance timer when user interacts
+            clearTimeout(autoSlideTimer);
+            // Show the new slide
+            showSlides(slideIndex = n);
+            // Restart auto advance
+            startAutoAdvance();
+        }
+
+
+        function startAutoAdvance() {
+            // Clear any existing timer to prevent doubling up
+            clearTimeout(autoSlideTimer); 
+            // Set a new timer to advance slide every 7 seconds
+            autoSlideTimer = setTimeout(() => {
+                plusSlides(1);
+            }, 7000);
+        }
+
+        // Initialize the slideshow and start auto-advance when the window loads
+        window.onload = function() {
+            showSlides(slideIndex);
+            startAutoAdvance();
+        };
+
+        // Pause auto-advance when the mouse hovers over the slideshow
+        const slideshowContainer = document.querySelector('.slideshow-container');
+        slideshowContainer.addEventListener('mouseenter', () => clearTimeout(autoSlideTimer));
+        slideshowContainer.addEventListener('mouseleave', () => startAutoAdvance());
+
+    </script>
+
+</body>
+</html>
