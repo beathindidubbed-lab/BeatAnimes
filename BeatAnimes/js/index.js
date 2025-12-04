@@ -1,4 +1,4 @@
-// BeatAnimes/js/index.js - FIXED VERSION with banner support
+// BeatAnimes/js/index.js - FIXED with Banner Support
 
 const IndexApi = "/home";
 const AvailableServers = ["https://beatanimesapi.onrender.com"];
@@ -41,7 +41,7 @@ async function getJson(path, errCount = 0) {
     }
 }
 
-// ✅ FIXED: Banner now uses bannerImage for background
+// ✅ FIXED: Banner uses bannerImage (wide format)
 async function getTrendingAnimes(popularData) {
     if (!popularData || popularData.length === 0) {
         console.warn("⚠️ No banner data");
@@ -62,9 +62,12 @@ async function getTrendingAnimes(popularData) {
         let status = "Available";
         let url = "./anime.html?anime_id=" + encodeURIComponent(id);
         
-        // ✅ Use bannerImage for the slider background, fallback to coverImage if not available
-        let bannerUrl = anime.banner || anime.bannerImage || anime.image || "./static/loading1.gif";
-        let coverUrl = anime.image || anime.coverImage || "./static/loading1.gif";
+        // ✅ Use bannerImage for slider background (wide 16:9 format)
+        // Fallback chain: bannerImage → banner → image
+        let bannerUrl = anime.bannerImage || anime.banner || anime.image || "./static/loading1.gif";
+        
+        // Fallback for error: use cover image
+        let coverFallback = anime.image || anime.coverImage || "./static/loading1.gif";
 
         SLIDER_HTML += `<div class="mySlides fade">
             <div class="data-slider">
@@ -86,7 +89,10 @@ async function getTrendingAnimes(popularData) {
                 </div>
             </div>
             <div class="shado"><a href="${url}"></a></div>
-            <img src="${bannerUrl}" onerror="this.onerror=null; this.src='${coverUrl}'" alt="${title}">
+            <img src="${bannerUrl}" 
+                 onerror="this.onerror=null; this.src='${coverFallback}'" 
+                 alt="${title}"
+                 style="object-fit: cover; object-position: center;">
         </div>`;
     }
 
@@ -98,10 +104,10 @@ async function getTrendingAnimes(popularData) {
             '<div class="swipe-hint"><i class="fa fa-hand-o-right"></i> Swipe to browse</div>';
     }
     
-    console.log("✅ Banner loaded");
+    console.log("✅ Banner loaded with wide images");
 }
 
-// Popular section - uses coverImage (thumbnail)
+// ✅ Popular section uses coverImage (portrait thumbnails)
 async function getPopularAnimes(popularData) {
     if (!popularData || popularData.length === 0) {
         console.warn("⚠️ No popular anime");
@@ -122,8 +128,8 @@ async function getPopularAnimes(popularData) {
         let id = anime.id || "";
         let url = "./anime.html?anime_id=" + encodeURIComponent(id);
         
-        // ✅ Use coverImage for thumbnails
-        let image = anime.image || anime.coverImage || "./static/loading1.gif";
+        // ✅ Use coverImage/image for card thumbnails (portrait format)
+        let thumbUrl = anime.image || anime.coverImage || "./static/loading1.gif";
         let tag = anime.source ? anime.source.toUpperCase() : "ANIME";
 
         POPULAR_HTML += `<a href="${url}">
@@ -133,7 +139,7 @@ async function getPopularAnimes(popularData) {
                     <div class="dubb dubb2">${tag}</div>
                 </div>
                 <div id="shadow2" class="shadow">
-                    <img class="lzy_img" src="./static/loading1.gif" data-src="${image}" 
+                    <img class="lzy_img" src="./static/loading1.gif" data-src="${thumbUrl}" 
                          onerror="this.src='./static/loading1.gif'" alt="${title}">
                 </div>
                 <div class="la-details">
@@ -144,10 +150,10 @@ async function getPopularAnimes(popularData) {
     }
 
     document.querySelector(".popularg").innerHTML = POPULAR_HTML;
-    console.log("✅ Popular section loaded");
+    console.log("✅ Popular section loaded with portrait thumbnails");
 }
 
-// Recent section
+// Recent section - also uses portrait thumbnails
 async function initRecentSection(recentData) {
     if (!recentData || recentData.length === 0) {
         console.warn("⚠️ No recent data");
@@ -194,8 +200,6 @@ async function initRecentSection(recentData) {
 // Slider functions
 let slideIndex = 0;
 let clickes = 0;
-
-// ✅ NEW: Touch/Swipe support variables
 let touchStartX = 0;
 let touchEndX = 0;
 let isDragging = false;
@@ -249,46 +253,37 @@ function plusSlides(n) {
     clickes = 1;
 }
 
-// ✅ NEW: Initialize swipe/drag functionality
 function initializeSwipe() {
     const container = document.querySelector('.slideshow-container');
     if (!container) return;
     
     console.log('✅ Swipe functionality initialized');
     
-    // Touch events (mobile)
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
     container.addEventListener('touchmove', handleTouchMove, { passive: true });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
     
-    // Mouse events (desktop drag)
     container.addEventListener('mousedown', handleMouseDown);
     container.addEventListener('mousemove', handleMouseMove);
     container.addEventListener('mouseup', handleMouseUp);
     container.addEventListener('mouseleave', handleMouseUp);
     
-    // Keyboard navigation
     document.addEventListener('keydown', handleKeyPress);
     
-    // Prevent default drag on images
     const images = container.querySelectorAll('img');
     images.forEach(img => {
         img.addEventListener('dragstart', (e) => e.preventDefault());
     });
 }
 
-// ✅ NEW: Keyboard navigation
 function handleKeyPress(e) {
     if (e.key === 'ArrowLeft') {
         plusSlides(-1);
-        console.log('⌨️ Left arrow - Previous slide');
     } else if (e.key === 'ArrowRight') {
         plusSlides(1);
-        console.log('⌨️ Right arrow - Next slide');
     }
 }
 
-// Touch handlers
 function handleTouchStart(e) {
     touchStartX = e.touches[0].clientX;
 }
@@ -301,9 +296,7 @@ function handleTouchEnd() {
     handleSwipe();
 }
 
-// Mouse handlers
 function handleMouseDown(e) {
-    // Ignore if clicking on buttons or links
     if (e.target.closest('.prev') || e.target.closest('.next') || e.target.closest('a')) {
         return;
     }
@@ -319,7 +312,6 @@ function handleMouseMove(e) {
     const currentX = e.clientX;
     const diff = currentX - dragStartX;
     
-    // Visual feedback (optional - adds slight movement)
     if (Math.abs(diff) > 5) {
         currentTranslate = diff;
     }
@@ -339,26 +331,20 @@ function handleMouseUp(e) {
     currentTranslate = 0;
 }
 
-// Swipe detection
 function handleSwipe() {
-    const swipeThreshold = 50; // Minimum distance for a swipe
+    const swipeThreshold = 50;
     const diff = touchStartX - touchEndX;
     
     if (Math.abs(diff) < swipeThreshold) {
-        return; // Not enough movement
+        return;
     }
     
     if (diff > 0) {
-        // Swiped left - go to next slide
         plusSlides(1);
-        console.log('👆 Swiped left - Next slide');
     } else {
-        // Swiped right - go to previous slide
         plusSlides(-1);
-        console.log('👆 Swiped right - Previous slide');
     }
     
-    // Reset
     touchStartX = 0;
     touchEndX = 0;
 }
@@ -408,7 +394,6 @@ async function initializePage() {
             showSlides(slideIndex);
             showSlides2();
             
-            // ✅ Initialize swipe after banner is loaded
             setTimeout(() => {
                 initializeSwipe();
             }, 500);
