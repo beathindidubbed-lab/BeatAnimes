@@ -1,68 +1,51 @@
-// Api urls
+// BeatAnimes/js/episode.js - FIXED: Better Telegram Streaming
+
 const animeapi = "/anime/";
 const episodeapi = "/episode/";
-
-// Api Server Manager
 const AvailableServers = ["https://beatanimesapi.onrender.com"];
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
 }
 
-// Useful functions
 async function getJson(path, errCount = 0) {
     const ApiServer = getApiServer();
     let url = ApiServer + path;
-
-    console.log(`🌐 Fetching: ${url} (attempt ${errCount + 1})`);
 
     if (errCount > 2) {
         throw new Error(`Too many errors while fetching ${url}`);
     }
 
     try {
-        const _url_of_site = new URL(window.location.href);
-        const referer = _url_of_site.origin;
         const response = await fetch(url, { 
-            headers: { referer: referer },
+            headers: { referer: window.location.origin },
             cache: 'no-cache'
         });
-        
-        console.log(`📡 Response status: ${response.status}`);
         
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
         
-        const data = await response.json();
-        console.log(`✅ Data received:`, data);
-        return data;
+        return await response.json();
     } catch (errors) {
-        console.error(`❌ Fetch error:`, errors);
+        console.error(`Fetch error:`, errors);
         return getJson(path, errCount + 1);
     }
 }
 
-// Load video player with Telegram + Direct URL support
+// ✅ FIXED: Better video loading with Telegram support
 async function loadVideo(name, episodeData) {
-    console.log("🎬 loadVideo called with:", { name, episodeData });
+    console.log("🎬 Loading video:", name);
     
     try {
         const epNameEl = document.getElementById("ep-name");
-        if (epNameEl) {
-            epNameEl.innerHTML = name;
-            console.log("✅ Set episode name");
-        }
+        if (epNameEl) epNameEl.innerHTML = name;
         
         const serversbtn = document.getElementById("serversbtn");
-        if (!serversbtn) {
-            console.error("❌ serversbtn element not found!");
-            throw new Error("Servers button container not found");
-        }
+        if (!serversbtn) throw new Error("Servers button container not found");
 
-        // Check if we have variants (Telegram API)
-        if (episodeData.variants && Array.isArray(episodeData.variants) && episodeData.variants.length > 0) {
-            console.log("✅ Using Telegram variants:", episodeData.variants);
+        if (episodeData.variants && episodeData.variants.length > 0) {
+            console.log("✅ Found variants:", episodeData.variants.length);
             
             // Group by language
             const languages = {};
@@ -72,8 +55,6 @@ async function loadVideo(name, episodeData) {
                 }
                 languages[variant.language].push(variant);
             }
-
-            console.log("📊 Languages grouped:", languages);
 
             let html = '<div class="language-selector">';
             Object.keys(languages).forEach((lang, index) => {
@@ -88,16 +69,14 @@ async function loadVideo(name, episodeData) {
 
                 variants.forEach((variant, index) => {
                     const active = index === 0 && langIndex === 0 ? 'sactive' : '';
-                    const directUrl = variant.directUrl || '';
-                    const videoUrl = variant.videoUrl || variant.url || '';
-
+                    
                     html += `<div class="sitem">
                         <a class="sobtn ${active}"
                            onclick="selectTelegramServer(this)"
                            data-channel="${variant.channelName || ''}"
                            data-msgid="${variant.messageId || ''}"
-                           data-direct-url="${directUrl}"
-                           data-video-url="${videoUrl}">
+                           data-direct-url="${variant.directUrl || ''}"
+                           data-video-url="${variant.videoUrl || ''}">
                            ${variant.quality} ${variant.language}
                         </a>
                     </div>`;
@@ -107,65 +86,38 @@ async function loadVideo(name, episodeData) {
             });
             
             serversbtn.innerHTML = html;
-            console.log("✅ Server buttons created");
-            
             return true;
-
-        } else {
-            console.warn("⚠️ No Telegram variants found");
-            throw new Error("No video sources available");
         }
+        
+        throw new Error("No video sources available");
     } catch (err) {
         console.error("❌ loadVideo error:", err);
         return false;
     }
 }
 
-// ============================================
-// FIXED: selectTelegramServer - Proper Direct URL Handling
-// ============================================
-
+// ✅ FIXED: Properly handle Telegram streaming
 window.selectTelegramServer = async function(btn) {
-    console.log('🖱️ selectTelegramServer called');
+    console.log('🖱️ Server button clicked');
 
-    if (!btn) {
-        console.error('❌ Button is null');
-        return;
-    }
+    if (!btn) return;
 
-    const buttons = document.getElementsByClassName("sobtn");
     const videoContainer = document.getElementById("video");
+    if (!videoContainer) return;
 
-    if (!videoContainer) {
-        console.error('❌ Video container not found');
-        return;
-    }
-
-    // Get data from button
     const channelName = btn.getAttribute("data-channel");
     const messageId = btn.getAttribute("data-msgid");
-    let directUrl = btn.getAttribute("data-direct-url");  // ✅ Get direct URL
+    let directUrl = btn.getAttribute("data-direct-url");
     const videoUrl = btn.getAttribute("data-video-url");
     const quality = btn.textContent.trim();
 
-    console.log('🎥 Raw attributes:', { 
-        channelName, 
-        messageId, 
-        directUrl, 
-        videoUrl, 
-        quality 
-    });
-
-    // ✅ FIX: Clean up the direct URL - remove quotes and whitespace
+    // Clean direct URL
     if (directUrl) {
         directUrl = directUrl.trim().replace(/^["']|["']$/g, '');
-        console.log('🧹 Cleaned direct URL:', directUrl);
     }
 
-    // Mark button as active
-    for (let i = 0; i < buttons.length; i++) {
-        buttons[i].classList.remove("sactive");
-    }
+    // Mark as active
+    document.querySelectorAll(".sobtn").forEach(b => b.classList.remove("sactive"));
     btn.classList.add("sactive");
 
     // Show loading
@@ -177,179 +129,111 @@ window.selectTelegramServer = async function(btn) {
     `;
 
     try {
-        // ✅ Priority 1: If direct URL is available and valid, use it immediately
-        if (directUrl && 
-            directUrl !== 'null' && 
-            directUrl !== 'undefined' && 
-            directUrl !== '' &&
+        // ✅ Priority 1: Direct URL from caption
+        if (directUrl && directUrl !== 'null' && directUrl !== 'undefined' && 
             (directUrl.startsWith('http://') || directUrl.startsWith('https://'))) {
             
-            console.log('✅ Using direct URL from caption:', directUrl);
-
+            console.log('✅ Using direct URL:', directUrl);
             videoContainer.innerHTML = `
-                <iframe
-                    id="BeatAnimesFrame"
+                <iframe id="BeatAnimesFrame"
                     src="./embed.html?url=${encodeURIComponent(directUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
                     style="border: 0px; width: 100%; height: 100%;"
-                    scrolling="no"
-                    frameborder="0"
-                    allowfullscreen>
+                    scrolling="no" frameborder="0" allowfullscreen>
                 </iframe>
             `;
             return;
         }
 
-        // ✅ Priority 2: Check if videoUrl is already a direct URL
-        if (videoUrl && 
-            videoUrl !== 'null' && 
-            videoUrl !== 'undefined' && 
-            videoUrl !== '' &&
-            (videoUrl.startsWith('http://') || videoUrl.startsWith('https://'))) {
-            
-            console.log('✅ Using direct URL from videoUrl:', videoUrl);
-
-            videoContainer.innerHTML = `
-                <iframe
-                    id="BeatAnimesFrame"
-                    src="./embed.html?url=${encodeURIComponent(videoUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
-                    style="border: 0px; width: 100%; height: 100%;"
-                    scrolling="no"
-                    frameborder="0"
-                    allowfullscreen>
-                </iframe>
-            `;
-            return;
-        }
-
-        // ✅ Priority 3: Try to get stream URL from API
+        // ✅ Priority 2: Try API streaming endpoint
         if (channelName && messageId) {
             const ApiServer = getApiServer();
             const streamUrl = `${ApiServer}/stream/${channelName}/${messageId}`;
             
-            console.log('🔄 Attempting to get stream URL from API:', streamUrl);
+            console.log('🔄 Trying stream API:', streamUrl);
 
             try {
-                const response = await fetch(streamUrl, { 
-                    timeout: 10000,
-                    headers: { 'Accept': 'application/json' }
-                });
+                const response = await fetch(streamUrl, { timeout: 10000 });
                 const data = await response.json();
-
-                console.log('📦 API Response:', data);
 
                 if (data.videoUrl || data.url || data.streamUrl) {
                     const apiDirectUrl = data.videoUrl || data.url || data.streamUrl;
-                    console.log('✅ Got direct URL from API:', apiDirectUrl);
+                    console.log('✅ Got stream URL:', apiDirectUrl);
 
                     videoContainer.innerHTML = `
-                        <iframe
-                            id="BeatAnimesFrame"
+                        <iframe id="BeatAnimesFrame"
                             src="./embed.html?url=${encodeURIComponent(apiDirectUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
                             style="border: 0px; width: 100%; height: 100%;"
-                            scrolling="no"
-                            frameborder="0"
-                            allowfullscreen>
+                            scrolling="no" frameborder="0" allowfullscreen>
                         </iframe>
                     `;
                     return;
                 }
             } catch (error) {
-                console.warn('⚠️ Could not fetch stream URL from API:', error.message);
+                console.warn('⚠️ Stream API failed:', error.message);
             }
         }
 
-        // ✅ Priority 4: Fallback to Telegram web link
+        // ✅ Fallback: Telegram web link with beautiful UI
         const telegramUrl = `https://t.me/${channelName}/${messageId}`;
-        console.log('⚠️ Falling back to Telegram redirect:', telegramUrl);
+        console.log('⚠️ Falling back to Telegram:', telegramUrl);
 
         videoContainer.innerHTML = `
             <div style="
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100%;
+                display: flex; flex-direction: column; align-items: center;
+                justify-content: center; height: 100%;
                 background: linear-gradient(135deg, #2a2b2f 0%, #1a1a2e 100%);
-                border-radius: 8px;
-                padding: 40px 20px;
+                border-radius: 8px; padding: 40px 20px;
             ">
                 <div style="
                     background: linear-gradient(to right, #eb3349, #f45c43);
-                    width: 80px;
-                    height: 80px;
-                    border-radius: 50%;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    margin-bottom: 25px;
-                    box-shadow: 0 8px 20px rgba(235, 51, 73, 0.4);
+                    width: 80px; height: 80px; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    margin-bottom: 25px; box-shadow: 0 8px 20px rgba(235, 51, 73, 0.4);
                 ">
                     <i class="fa fa-telegram" style="font-size: 40px; color: white;"></i>
                 </div>
 
-                <h3 style="
-                    color: white;
-                    font-family: 'Montserrat', sans-serif;
-                    font-size: 22px;
-                    margin-bottom: 15px;
-                    text-align: center;
-                ">Watch on Telegram</h3>
+                <h3 style="color: white; font-family: 'Montserrat', sans-serif; 
+                    font-size: 22px; margin-bottom: 15px; text-align: center;">
+                    Watch on Telegram
+                </h3>
 
-                <p style="
-                    color: #999;
-                    font-family: 'Montserrat', sans-serif;
-                    font-size: 14px;
-                    margin-bottom: 30px;
-                    text-align: center;
-                    max-width: 400px;
-                ">Quality: <strong style="color: #eb3349;">${quality}</strong></p>
+                <p style="color: #999; font-family: 'Montserrat', sans-serif; 
+                    font-size: 14px; margin-bottom: 30px; text-align: center; max-width: 400px;">
+                    Quality: <strong style="color: #eb3349;">${quality}</strong>
+                </p>
 
                 <a href="${telegramUrl}" target="_blank" style="
                     background: linear-gradient(to right, #eb3349, #f45c43);
-                    color: white;
-                    padding: 15px 40px;
-                    border-radius: 50px;
-                    text-decoration: none;
-                    font-family: 'Montserrat', sans-serif;
-                    font-size: 16px;
-                    font-weight: 600;
+                    color: white; padding: 15px 40px; border-radius: 50px;
+                    text-decoration: none; font-family: 'Montserrat', sans-serif;
+                    font-size: 16px; font-weight: 600;
                     box-shadow: 0 4px 15px rgba(235, 51, 73, 0.3);
-                    transition: all 0.3s;
-                    display: inline-flex;
-                    align-items: center;
-                    gap: 10px;
-                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                    transition: all 0.3s; display: inline-flex;
+                    align-items: center; gap: 10px;
+                " onmouseover="this.style.transform='scale(1.05)'" 
+                   onmouseout="this.style.transform='scale(1)'">
                     <i class="fa fa-play-circle"></i>
                     Open in Telegram
                 </a>
 
-                <p style="
-                    color: #666;
-                    font-family: 'Montserrat', sans-serif;
-                    font-size: 12px;
-                    margin-top: 20px;
-                    text-align: center;
-                ">Direct streaming not available. Video will open in Telegram app.</p>
+                <p style="color: #666; font-family: 'Montserrat', sans-serif;
+                    font-size: 12px; margin-top: 20px; text-align: center;">
+                    Video will open in Telegram app
+                </p>
             </div>
         `;
 
     } catch (error) {
-        console.error('❌ Error loading video:', error);
-        
+        console.error('❌ Error:', error);
         videoContainer.innerHTML = `
             <div style="padding: 40px; text-align: center; color: white;">
                 <h3 style="color: #eb3349; margin-bottom: 20px;">Failed to Load Video</h3>
                 <p>${error.message}</p>
                 <button onclick="location.reload()" style="
-                    background: #eb3349;
-                    color: white;
-                    padding: 12px 30px;
-                    border: none;
-                    border-radius: 25px;
-                    cursor: pointer;
-                    font-size: 16px;
-                    margin-top: 20px;
-                ">
+                    background: #eb3349; color: white; padding: 12px 30px;
+                    border: none; border-radius: 25px; cursor: pointer;
+                    font-size: 16px; margin-top: 20px;">
                     <i class="fa fa-refresh"></i> Retry
                 </button>
             </div>
@@ -359,73 +243,55 @@ window.selectTelegramServer = async function(btn) {
 
 // Language switcher
 window.switchLanguage = function(language) {
-    console.log("🌍 Switching language to:", language);
-    
     document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.dataset.lang === language) {
-            btn.classList.add('active');
-        }
+        if (btn.dataset.lang === language) btn.classList.add('active');
     });
     
-    document.querySelectorAll('.quality-selector').forEach(selector => {
-        selector.style.display = 'none';
-    });
-    const targetSelector = document.querySelector(`.quality-${language}`);
-    if (targetSelector) {
-        targetSelector.style.display = 'block';
-    }
+    document.querySelectorAll('.quality-selector').forEach(s => s.style.display = 'none');
+    const target = document.querySelector(`.quality-${language}`);
+    if (target) target.style.display = 'block';
     
     const firstBtn = document.querySelector(`.quality-${language} .sobtn`);
     if (firstBtn) {
-        document.querySelectorAll('.sobtn').forEach(btn => btn.classList.remove('sactive'));
+        document.querySelectorAll('.sobtn').forEach(b => b.classList.remove('sactive'));
         firstBtn.classList.add('sactive');
         selectTelegramServer(firstBtn);
     }
-}
+};
 
 // Episode list functions
 let Episode_List = [];
 
 async function getEpUpperList(eplist) {
-    console.log("📋 getEpUpperList called with:", eplist);
-    
-    if (!eplist || !Array.isArray(eplist) || eplist.length === 0) {
-        console.warn("⚠️ No episodes available");
-        return;
-    }
+    if (!eplist || eplist.length === 0) return;
 
     const current_ep = Number(EpisodeID.split("-episode-")[1]);
-    console.log("🎯 Current episode:", current_ep);
-    
     Episode_List = eplist;
     const TotalEp = eplist.length;
     let html = "";
 
     for (let i = 0; i < eplist.length; i++) {
         if (!eplist[i] || !eplist[i][0]) continue;
-        
         const epnum = Number(String(eplist[i][0]));
 
         if ((epnum - 1) % 100 === 0) {
             let epUpperBtnText;
             if (TotalEp - epnum < 100) {
                 epUpperBtnText = `${epnum} - ${TotalEp}`;
-
                 if (epnum <= current_ep && current_ep <= TotalEp) {
-                    html += `<option id="default-ep-option" class="ep-btn" data-from="${epnum}" data-to="${TotalEp}">${epUpperBtnText}</option>`;
+                    html += `<option id="default-ep-option" data-from="${epnum}" data-to="${TotalEp}">${epUpperBtnText}</option>`;
                     getEpLowerList(epnum, TotalEp);
                 } else {
-                    html += `<option class="ep-btn" data-from="${epnum}" data-to="${TotalEp}">${epUpperBtnText}</option>`;
+                    html += `<option data-from="${epnum}" data-to="${TotalEp}">${epUpperBtnText}</option>`;
                 }
             } else {
                 epUpperBtnText = `${epnum} - ${epnum + 99}`;
-
                 if (epnum <= current_ep && current_ep <= epnum + 99) {
-                    html += `<option id="default-ep-option" class="ep-btn" data-from="${epnum}" data-to="${epnum + 99}">${epUpperBtnText}</option>`;
+                    html += `<option id="default-ep-option" data-from="${epnum}" data-to="${epnum + 99}">${epUpperBtnText}</option>`;
                     getEpLowerList(epnum, epnum + 99);
                 } else {
-                    html += `<option class="ep-btn" data-from="${epnum}" data-to="${epnum + 99}">${epUpperBtnText}</option>`;
+                    html += `<option data-from="${epnum}" data-to="${epnum + 99}">${epUpperBtnText}</option>`;
                 }
             }
         }
@@ -435,28 +301,19 @@ async function getEpUpperList(eplist) {
     if (epUpperDiv) {
         epUpperDiv.innerHTML = html;
         const defaultOption = document.getElementById("default-ep-option");
-        if (defaultOption) {
-            defaultOption.selected = true;
-        }
+        if (defaultOption) defaultOption.selected = true;
     }
-    
-    console.log("✅ Episode list loaded");
 }
 
 async function getEpLowerList(start, end) {
-    console.log(`📋 Loading episodes ${start} to ${end}`);
-    
     const current_ep = Number(EpisodeID.split("-episode-")[1]);
-
     let html = "";
     const eplist = Episode_List.slice(start - 1, end);
 
     for (let i = 0; i < eplist.length; i++) {
         if (!eplist[i] || eplist[i].length < 2) continue;
-        
         const episode_id = eplist[i][1];
         let epnum = Number(String(eplist[i][0]));
-
         let epLowerBtnText = `${epnum}`;
 
         if (epnum === current_ep) {
@@ -467,14 +324,11 @@ async function getEpLowerList(start, end) {
     }
     
     const epLowerDiv = document.getElementById("ep-lower-div");
-    if (epLowerDiv) {
-        epLowerDiv.innerHTML = html;
-    }
+    if (epLowerDiv) epLowerDiv.innerHTML = html;
 }
 
 async function episodeSelectChange(elem) {
     if (!elem || !elem.options) return;
-    
     const option = elem.options[elem.selectedIndex];
     if (option) {
         getEpLowerList(
@@ -486,18 +340,11 @@ async function episodeSelectChange(elem) {
 
 // Episode Slider
 async function getEpSlider(total) {
-    console.log("🎞️ getEpSlider called with:", total);
-    
-    if (!total || !Array.isArray(total) || total.length === 0) {
-        console.warn("⚠️ No episodes for slider");
-        return;
-    }
+    if (!total || !Array.isArray(total) || total.length === 0) return;
 
     let ephtml = "";
-
     for (let i = 0; i < total.length; i++) {
         if (!total[i] || total[i].length < 2) continue;
-        
         const episodeId = total[i][1];
         const epNum = total[i][0];
         const isPlaying = episodeId === EpisodeID;
@@ -506,122 +353,55 @@ async function getEpSlider(total) {
         ephtml += `<div class="${epClass}" style="
             background: linear-gradient(135deg, #35373d 0%, #2a2b2f 100%);
             border: 2px solid ${isPlaying ? '#ed3832' : '#ffffff'};
-            border-radius: 8px;
-            padding: 20px;
-            text-align: center;
-            min-width: 120px;
-            height: 100px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            margin: 0 10px;
-            transition: all 0.3s;
+            border-radius: 8px; padding: 20px; text-align: center;
+            min-width: 120px; height: 100px; display: flex;
+            align-items: center; justify-content: center; flex-direction: column;
+            margin: 0 10px; transition: all 0.3s;
         ">
             <a href="./episode.html?anime_id=${AnimeID}&episode_id=${episodeId}" style="
-                text-decoration: none;
-                width: 100%;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
+                text-decoration: none; width: 100%; height: 100%;
+                display: flex; flex-direction: column; align-items: center; justify-content: center;
             ">
                 <div style="
                     color: ${isPlaying ? '#ed3832' : '#ffffff'};
                     font-family: 'Montserrat', sans-serif;
-                    font-size: 20px;
-                    font-weight: 700;
-                    margin-bottom: 5px;
+                    font-size: 20px; font-weight: 700; margin-bottom: 5px;
                 ">EP ${epNum}</div>
-                ${isPlaying ? `<div style="
-                    color: #ed3832;
-                    font-size: 12px;
-                    font-weight: 600;
-                ">▶ PLAYING</div>` : ''}
+                ${isPlaying ? `<div style="color: #ed3832; font-size: 12px; font-weight: 600;">▶ PLAYING</div>` : ''}
             </a>
         </div>`;
     }
     
     const epSlider = document.getElementById("ep-slider");
-    if (epSlider) {
-        epSlider.innerHTML = ephtml;
-        console.log("✅ Episode slider HTML set");
-    }
+    if (epSlider) epSlider.innerHTML = ephtml;
     
     const sliderMain = document.getElementById("slider-main");
-    if (sliderMain) {
-        sliderMain.style.display = "block";
-        console.log("✅ Slider visible");
-    }
+    if (sliderMain) sliderMain.style.display = "block";
 
     setTimeout(() => {
         const mainSection = document.getElementById("main-section");
-        if (mainSection) {
-            mainSection.style.display = "block";
-            console.log("✅ Main section visible");
-        }
+        if (mainSection) mainSection.style.display = "block";
         
         const playingSlide = document.getElementsByClassName("ep-slider-playing")[0];
-        if (playingSlide) {
-            playingSlide.scrollIntoView({ behavior: "instant", inline: "start", block: "end" });
-        }
-        
-        const playingBtn = document.getElementsByClassName("ep-btn-playing")[0];
-        if (playingBtn) {
-            playingBtn.scrollIntoView({ behavior: "instant", inline: "start", block: "end" });
-        }
+        if (playingSlide) playingSlide.scrollIntoView({ behavior: "instant", inline: "start" });
         
         window.scrollTo({ top: 0, left: 0, behavior: "instant" });
 
         setTimeout(() => {
-            if (mainSection) {
-                mainSection.style.opacity = 1;
-                console.log("✅ Main section opacity 1");
-            }
+            if (mainSection) mainSection.style.opacity = 1;
             const loadEl = document.getElementById("load");
-            if (loadEl) {
-                loadEl.style.display = "none";
-                console.log("✅ Loading hidden");
-            }
+            if (loadEl) loadEl.style.display = "none";
         }, 100);
     }, 500);
 }
 
-// Scroll episode slider
-const windowWidth = window.innerWidth;
-
+// Scroll slider
 function plusSlides(n) {
     const carousel = document.getElementById("slider-carousel");
     if (!carousel) return;
-    
-    if (n === 1) {
-        carousel.scrollLeft += windowWidth / 2;
-    } else if (n === -1) {
-        carousel.scrollLeft -= windowWidth / 2;
-    }
-}
-
-async function RefreshLazyLoader() {
-    const imageObserver = new IntersectionObserver((entries) => {
-        entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-                const lazyImage = entry.target;
-                if (lazyImage.dataset.src) {
-                    lazyImage.src = lazyImage.dataset.src;
-                    lazyImage.classList.remove("lzy_img");
-                    imageObserver.unobserve(lazyImage);
-                }
-            }
-        });
-    }, {
-        rootMargin: "50px"
-    });
-    
-    const arr = document.querySelectorAll("img.lzy_img");
-    arr.forEach((v) => {
-        imageObserver.observe(v);
-    });
+    const windowWidth = window.innerWidth;
+    if (n === 1) carousel.scrollLeft += windowWidth / 2;
+    else if (n === -1) carousel.scrollLeft -= windowWidth / 2;
 }
 
 // Get URL parameters
@@ -630,108 +410,49 @@ const urlParams = new URLSearchParams(queryString);
 const AnimeID = urlParams.get("anime_id");
 const EpisodeID = urlParams.get("episode_id");
 
-console.log("🔍 URL Parameters:", { AnimeID, EpisodeID });
-
 if (!AnimeID || !EpisodeID) {
-    console.error("❌ Missing AnimeID or EpisodeID, redirecting to home");
     window.location = "./index.html";
 }
 
 async function loadEpisodeData(data) {
-    console.log("📦 loadEpisodeData called with:", data);
-    
-    if (!data || !data.results) {
-        throw new Error("Invalid episode data");
-    }
-
+    if (!data || !data.results) throw new Error("Invalid episode data");
     data = data.results;
     const name = data.name || "Unknown Episode";
 
-    console.log("📝 Replacing title with:", name);
     document.documentElement.innerHTML = 
         document.documentElement.innerHTML.replaceAll("{{ title }}", name);
 
-    console.log("🎬 Calling loadVideo...");
     const videoLoaded = await loadVideo(name, data);
+    if (!videoLoaded) throw new Error("Failed to load video");
     
-    if (!videoLoaded) {
-        throw new Error("Failed to load video");
-    }
-    
-    console.log("✅ Video loaded successfully");
-    
-    // ✅ CRITICAL FIX: Auto-select first server AFTER DOM is replaced
+    // ✅ Auto-select first server
     setTimeout(() => {
         const firstBtn = document.querySelector('.sobtn.sactive');
-        if (firstBtn) {
-            console.log("🖱️ Auto-clicking first server button");
-            selectTelegramServer(firstBtn);
-        } else {
-            console.warn("⚠️ No active server button found");
-        }
+        if (firstBtn) selectTelegramServer(firstBtn);
     }, 1000);
 }
 
 async function loadData() {
-    console.log("🚀 Starting loadData()");
-    
     try {
-        console.log(`🔍 Loading episode: ${EpisodeID}`);
-        
         const episodeData = await getJson(episodeapi + EpisodeID);
-        console.log("📦 Episode data received:", episodeData);
-        
         await loadEpisodeData(episodeData);
-        console.log("✅ Episode data loaded");
 
-        console.log(`🔍 Loading anime: ${AnimeID}`);
         const animeData = await getJson(animeapi + encodeURIComponent(AnimeID));
-        console.log("📦 Anime data received:", animeData);
-        
         if (!animeData || !animeData.results || !animeData.results.episodes) {
             throw new Error("Failed to load episode list");
         }
 
         const eplist = animeData.results.episodes;
-        console.log("📋 Episode list:", eplist);
-        
         await getEpUpperList(eplist);
-        console.log("✅ Episode list loaded");
-
-        try {
-            await getEpSlider(eplist);
-            console.log("✅ Episode Slider loaded");
-        } catch (err) {
-            console.error("⚠️ Slider failed:", err);
-            const mainSection = document.getElementById("main-section");
-            if (mainSection) {
-                mainSection.style.display = "block";
-                mainSection.style.opacity = 1;
-            }
-            const loadEl = document.getElementById("load");
-            if (loadEl) {
-                loadEl.style.display = "none";
-            }
-        }
+        await getEpSlider(eplist);
     } catch (err) {
-        console.error("❌ Load data error:", err);
-        console.error("Error stack:", err.stack);
-        
-        const mainSection = document.getElementById("main-section");
+        console.error("❌ Load error:", err);
         const errorPage = document.getElementById("error-page");
-        const errorDesc = document.getElementById("error-desc");
-        
-        if (mainSection) mainSection.style.display = "none";
-        if (errorPage) errorPage.style.display = "block";
-        if (errorDesc) errorDesc.innerHTML = err.message || "Unknown error occurred";
-        
-        const loadEl = document.getElementById("load");
-        if (loadEl) loadEl.style.display = "none";
-    }
-    
-    const iframe = document.getElementById("BeatAnimesFrame");
-    if (iframe) {
-        iframe.focus();
+        if (errorPage) {
+            errorPage.style.display = "block";
+            document.getElementById("error-desc").innerHTML = err.message;
+        }
+        document.getElementById("load").style.display = "none";
     }
 }
 
@@ -741,6 +462,4 @@ window.switchLanguage = switchLanguage;
 window.plusSlides = plusSlides;
 window.episodeSelectChange = episodeSelectChange;
 
-console.log("📜 episode.js loaded, calling loadData()...");
 loadData();
-
