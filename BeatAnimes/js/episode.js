@@ -144,33 +144,21 @@ window.selectTelegramServer = async function(btn) {
             return;
         }
 
-        // ✅ Priority 2: Try API streaming endpoint
+        // ✅ Priority 2: Try direct streaming (no API call needed)
         if (channelName && messageId) {
             const ApiServer = getApiServer();
-            const streamUrl = `${ApiServer}/stream/${channelName}/${messageId}`;
+            const directStreamUrl = `${ApiServer}/direct-stream/${channelName}/${messageId}`;
             
-            console.log('🔄 Trying stream API:', streamUrl);
+            console.log('✅ Using direct stream URL:', directStreamUrl);
 
-            try {
-                const response = await fetch(streamUrl, { timeout: 10000 });
-                const data = await response.json();
-
-                if (data.videoUrl || data.url || data.streamUrl) {
-                    const apiDirectUrl = data.videoUrl || data.url || data.streamUrl;
-                    console.log('✅ Got stream URL:', apiDirectUrl);
-
-                    videoContainer.innerHTML = `
-                        <iframe id="BeatAnimesFrame"
-                            src="./embed.html?url=${encodeURIComponent(apiDirectUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
-                            style="border: 0px; width: 100%; height: 100%;"
-                            scrolling="no" frameborder="0" allowfullscreen>
-                        </iframe>
-                    `;
-                    return;
-                }
-            } catch (error) {
-                console.warn('⚠️ Stream API failed:', error.message);
-            }
+            videoContainer.innerHTML = `
+                <iframe id="BeatAnimesFrame"
+                    src="./embed.html?url=${encodeURIComponent(directStreamUrl)}&episode_id=${encodeURIComponent(EpisodeID)}"
+                    style="border: 0px; width: 100%; height: 100%;"
+                    scrolling="no" frameborder="0" allowfullscreen>
+                </iframe>
+            `;
+            return;
         }
 
         // ✅ Fallback: Telegram web link with beautiful UI
