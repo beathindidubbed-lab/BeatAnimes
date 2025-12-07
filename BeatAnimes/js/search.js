@@ -1,5 +1,5 @@
 const searchapi = "/search/";
-const AvailableServers = ["https://beatanimesapi.onrender.com"];
+const AvailableServers = ["https://beatanimesapi-h6gt.onrender.com"];
 
 function getApiServer() {
     return AvailableServers[Math.floor(Math.random() * AvailableServers.length)];
@@ -182,3 +182,4 @@ async function loadData() {
 }
 
 loadData();
+
